@@ -1,0 +1,90 @@
+You are an expert full-stack software architect and senior developer with 10+ years of experience building scalable web applications, streaming platforms, and Telegram Mini Apps. Your task is to help me build a complete MVP for a Telegram Mini App that allows users to browse and stream movies and series, inspired by platforms like Netflix, adapted to Telegram’s Mini App framework.
+
+Goal: Generate project scaffolding, boilerplate code, and working examples for a fully functional MVP, ready for iteration.
+
+Requirements:
+
+Project Structure:
+
+Propose a clean project directory structure for both the frontend (Telegram Mini App using React or suitable framework) and backend (Node.js/Express or Python/FastAPI/Django).
+
+Include recommended folder names, modular separation, and explanation.
+
+Frontend (Telegram Mini App):
+
+Generate boilerplate React code for:
+
+App entry point.
+
+Routing/navigation suited for Telegram Mini App UX.
+
+Example UI components for home screen, movie detail page, video player page.
+
+Styling: include recommendation (e.g., CSS Modules, Styled Components, Tailwind).
+
+Example implementation of Telegram Mini App SDK integration (e.g., telegram.WebApp).
+
+Backend:
+
+Generate boilerplate code for the chosen backend framework with:
+
+API routes to proxy and handle TMDB API requests securely.
+
+Example endpoint to fetch movie details from TMDB.
+
+Example secure integration for VidSrc API (or similar) for getting streaming URLs.
+
+Authentication flow example for Telegram login.
+
+Database:
+
+Recommend suitable database (MongoDB/PostgreSQL).
+
+Provide example schema definitions/models for:
+
+User profiles.
+
+Watch progress (save last watched position per user per movie/episode).
+
+Analytics tracking (views, favorites/bookmarks, popular content).
+
+Admin Dashboard:
+
+Suggest React libraries (e.g., Material UI, Ant Design) for the dashboard.
+
+Provide boilerplate layout with sidebar, stats widgets, and table for managing content.
+
+Security Best Practices:
+
+Suggest concrete steps for secure handling of API keys.
+
+CORS setup, rate limiting, etc., for backend.
+
+Deployment Recommendations:
+
+Recommend deployment stack (Render, Vercel, Railway, or others).
+
+Example deployment configs (e.g., Dockerfile, Vercel config if needed).
+
+Bonus Features (Optional, but if time allows):
+
+Example code snippets for:
+
+Search/filter logic.
+
+Bookmark/favorite functionality.
+
+Subtitle rendering in video player.
+
+Output Format:
+Use Markdown code blocks for code samples, clearly label sections (e.g., Frontend Project Structure, Backend API Example, etc.). Provide concise but complete examples I can expand on.
+
+Constraints:
+
+Prioritize Telegram Mini App compatibility.
+
+Prioritize clean, maintainable code.
+
+Focus on delivering a fully working MVP I can test and deploy.
+
+Tone: Expert, practical, and actionable. No unnecessary explanation unless it clarifies implementation decisions.
