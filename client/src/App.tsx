@@ -67,6 +67,10 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    document.body.classList.add('loaded');
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

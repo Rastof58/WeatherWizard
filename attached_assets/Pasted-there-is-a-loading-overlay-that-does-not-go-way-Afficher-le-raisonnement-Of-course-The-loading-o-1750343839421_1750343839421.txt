@@ -1,0 +1,106 @@
+there is a loading overlay that does not go way
+
+
+
+Afficher le raisonnement
+Of course. The loading overlay issue is happening because the code to hide it is missing. I'll add the necessary line to your application's entry point to remove the overlay once the app has loaded.
+
+Here are the changes I've made:
+
+&lt;/solution>
+&lt;editor>
+&lt;file path="client/src/App.tsx">
+
+TypeScript
+
+import { Switch, Route } from &quot;wouter&quot;;
+import { queryClient } from &quot;./lib/queryClient&quot;;
+import { QueryClientProvider } from &quot;@tanstack/react-query&quot;;
+import { Toaster } from &quot;@/components/ui/toaster&quot;;
+import { TooltipProvider } from &quot;@/components/ui/tooltip&quot;;
+import { BottomNavigation } from &quot;@/components/bottom-navigation&quot;;
+import { useLocation } from &quot;wouter&quot;;
+import { useEffect } from &quot;react&quot;;
+
+import Home from "@/pages/home";
+import Search from "@/pages/search";
+import Categories from "@/pages/categories";
+import Trending from "@/pages/trending";
+import MovieDetail from "@/pages/movie-detail";
+import VideoPlayer from "@/pages/video-player";
+import WatchlistPage from "@/pages/watchlist";
+import Profile from "@/pages/profile";
+import NotFound from "@/pages/not-found";
+
+import { useTelegram } from "@/hooks/use-telegram";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+function Router() {
+const [location, navigate] = useLocation();
+const { user, isReady } = useTelegram();
+
+const authMutation = useMutation({
+mutationFn: async (userData: any) =\> {
+return apiRequest('POST', '/api/auth/telegram', userData);
+},
+});
+
+useEffect(() =\> {
+if (isReady && user && \!authMutation.isSuccess) {
+authMutation.mutate({
+telegramId: user.id.toString(),
+username: user.username,
+firstName: user.first\_name,
+lastName: user.last\_name,
+photoUrl: user.photo\_url,
+});
+}
+}, [isReady, user, authMutation]);
+
+const showBottomNav = \!location.includes('/player');
+
+return (
+&lt;div className=&quot;min-h-screen bg-netflix-black&quot;&gt;
+&lt;Switch&gt;
+&lt;Route path=&quot;/&quot; component={Home} /&gt;
+&lt;Route path=&quot;/search&quot; component={Search} /&gt;
+&lt;Route path=&quot;/categories&quot; component={Categories} /&gt;
+&lt;Route path=&quot;/trending&quot; component={Trending} /&gt;
+&lt;Route path=&quot;/watchlist&quot; component={WatchlistPage} /&gt;
+&lt;Route path=&quot;/profile&quot; component={Profile} /&gt;
+&lt;Route path=&quot;/movie/:id&quot; component={MovieDetail} /&gt;
+&lt;Route path=&quot;/player/:id&quot; component={VideoPlayer} /&gt;
+&lt;Route component={NotFound} /&gt;
+&lt;/Switch&gt;
+
+{showBottomNav && (
+<BottomNavigation onNavigate={navigate} />
+)}
+
+</div>
+
+
+);
+}
+
+function App() {
+useEffect(() =\> {
+document.body.classList.add('loaded');
+}, []);
+
+return (
+\<QueryClientProvider client={queryClient}\>
+\<TooltipProvider\>
+\<Toaster /\>
+\<Router /\>
+\</TooltipProvider\>
+\</QueryClientProvider\>
+);
+}
+
+export default App;
+
+</file>
+</editor>
+I've added a useEffect hook to the main App component. This will add the loaded class to the <body> element when the application first renders, which in turn will hide the loading spinner as defined in your client/index.html file.
