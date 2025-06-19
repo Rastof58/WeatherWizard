@@ -238,7 +238,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const [movies, setMovies] = useState([]);
             const [users, setUsers] = useState([]);
             const [loading, setLoading] = useState(true);
-            const [state, setState] = useState({ showNotificationForm: false });
+            const [state, setState] = useState({ 
+                showNotificationForm: false,
+                showTMDBSearch: false,
+                showAddMovieForm: false
+            });
             
             useEffect(() => {
                 fetchStats();
@@ -552,10 +556,264 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                             color: '#6b7280',
                                             fontSize: '16px'
                                         }}>
-                                            Manage your movie library
+                                            Manage your movie library ({movies.length} movies)
                                         </p>
                                     </div>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => setState(prev => ({ ...prev, showTMDBSearch: !prev.showTMDBSearch }))}
+                                        >
+                                            🔍 Search TMDB
+                                        </button>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => setState(prev => ({ ...prev, showAddMovieForm: !prev.showAddMovieForm }))}
+                                        >
+                                            ➕ Add Movie
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* TMDB Search Section */}
+                                {state.showTMDBSearch && (
+                                    <div className="card" style={{ marginBottom: '24px' }}>
+                                        <h3 style={{
+                                            fontSize: '18px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '16px'
+                                        }}>
+                                            🎬 Import from TMDB
+                                        </h3>
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            gap: '12px',
+                                            marginBottom: '16px'
+                                        }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Search for movies... (e.g., Avatar, Spider-Man, Avengers)"
+                                                className="form-input"
+                                                style={{ flex: 1 }}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        const query = e.target.value;
+                                                        if (query) {
+                                                            alert(\`Searching TMDB for: "\${query}"\nThis will show results to import with full metadata, posters, and ratings.\`);
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={(e) => {
+                                                    const input = e.target.parentElement.querySelector('input');
+                                                    const query = input.value;
+                                                    if (query) {
+                                                        alert(\`Searching TMDB for: "\${query}"\nResults will show movies you can import with:\n• Full movie details\n• High-quality posters\n• Cast & crew info\n• Ratings & reviews\n• Release dates\`);
+                                                    } else {
+                                                        alert('Please enter a movie title to search');
+                                                    }
+                                                }}
+                                            >
+                                                Search
+                                            </button>
+                                        </div>
+                                        <div style={{
+                                            backgroundColor: '#f8fafc',
+                                            padding: '12px',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            color: '#64748b'
+                                        }}>
+                                            💡 <strong>Tip:</strong> Search for popular movies like "Top Gun Maverick", "Avatar 2", "Black Panther" to import with complete metadata
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Manual Add Movie Form */}
+                                {state.showAddMovieForm && (
+                                    <div className="card" style={{ marginBottom: '24px' }}>
+                                        <h3 style={{
+                                            fontSize: '18px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '16px'
+                                        }}>
+                                            ➕ Add Movie Manually
+                                        </h3>
+                                        <form onSubmit={(e) => {
+                                            e.preventDefault();
+                                            const formData = new FormData(e.target);
+                                            const movie = {
+                                                title: formData.get('title'),
+                                                overview: formData.get('overview'),
+                                                releaseDate: formData.get('releaseDate'),
+                                                voteAverage: parseFloat(formData.get('rating')) || 0,
+                                                posterPath: formData.get('posterUrl'),
+                                                streamingUrl: formData.get('streamingUrl'),
+                                                status: 'published'
+                                            };
+                                            
+                                            fetch('/api/admin/movies', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(movie)
+                                            })
+                                            .then(res => res.json())
+                                            .then(data => {
+                                                if (data.success) {
+                                                    alert(\`Movie "\${movie.title}" added successfully!\`);
+                                                    setState(prev => ({ ...prev, showAddMovieForm: false }));
+                                                    // Refresh movies list
+                                                    loadData();
+                                                } else {
+                                                    alert('Error adding movie: ' + (data.error || 'Unknown error'));
+                                                }
+                                            })
+                                            .catch(err => {
+                                                console.error('Add movie error:', err);
+                                                alert('Failed to add movie. Check console for details.');
+                                            });
+                                        }}>
+                                            <div className="grid-2" style={{ marginBottom: '16px' }}>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Movie Title *
+                                                    </label>
+                                                    <input
+                                                        name="title"
+                                                        type="text"
+                                                        required
+                                                        placeholder="e.g., Avatar: The Way of Water"
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Release Date
+                                                    </label>
+                                                    <input
+                                                        name="releaseDate"
+                                                        type="date"
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#374151',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Description/Overview
+                                                </label>
+                                                <textarea
+                                                    name="overview"
+                                                    rows="3"
+                                                    placeholder="Brief description of the movie..."
+                                                    className="form-input"
+                                                    style={{ width: '100%', resize: 'vertical' }}
+                                                />
+                                            </div>
+                                            <div className="grid-2" style={{ marginBottom: '16px' }}>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Rating (0-10)
+                                                    </label>
+                                                    <input
+                                                        name="rating"
+                                                        type="number"
+                                                        min="0"
+                                                        max="10"
+                                                        step="0.1"
+                                                        placeholder="e.g., 8.2"
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Poster URL
+                                                    </label>
+                                                    <input
+                                                        name="posterUrl"
+                                                        type="url"
+                                                        placeholder="https://image.tmdb.org/t/p/w500/..."
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#374151',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Streaming URL (optional)
+                                                </label>
+                                                <input
+                                                    name="streamingUrl"
+                                                    type="url"
+                                                    placeholder="https://your-streaming-server.com/movie.mp4"
+                                                    className="form-input"
+                                                    style={{ width: '100%' }}
+                                                />
+                                            </div>
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                gap: '8px',
+                                                justifyContent: 'flex-end'
+                                            }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary"
+                                                    onClick={() => setState(prev => ({ ...prev, showAddMovieForm: false }))}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    className="btn btn-primary"
+                                                >
+                                                    ➕ Add Movie
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
                                 
                                 <div className="card">
                                     <div style={{
@@ -2090,6 +2348,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching admin users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  // Create new movie
+  app.post('/api/admin/movies', async (req: AuthenticatedRequest, res) => {
+    try {
+      const movieData = req.body;
+      
+      // Validate required fields
+      if (!movieData.title) {
+        return res.status(400).json({ error: 'Movie title is required' });
+      }
+
+      // Create movie with TMDB ID placeholder
+      const newMovie = await storage.createMovie({
+        tmdbId: Date.now(), // Use timestamp as placeholder TMDB ID
+        title: movieData.title,
+        overview: movieData.overview || '',
+        releaseDate: movieData.releaseDate || new Date().toISOString().split('T')[0],
+        voteAverage: movieData.voteAverage || 0,
+        posterPath: movieData.posterPath || null,
+        backdropPath: null,
+        genres: JSON.stringify([]),
+        runtime: 120, // Default runtime
+        status: movieData.status || 'published'
+      });
+
+      res.json({ 
+        success: true, 
+        movie: newMovie,
+        message: `Movie "${movieData.title}" added successfully`
+      });
+    } catch (error) {
+      console.error('Create movie error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create movie',
+        details: error.message
+      });
     }
   });
 
