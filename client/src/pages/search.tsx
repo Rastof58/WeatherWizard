@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { MovieCard } from '@/components/movie-card';
+import { SearchFilters, SearchFilters as SearchFiltersType } from '@/components/search-filters';
 import { Movie } from '@shared/schema';
 
 export default function Search() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<SearchFiltersType>({
+    genre: '',
+    minRating: 0,
+    year: '',
+    sortBy: 'popularity'
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -28,6 +36,52 @@ export default function Search() {
 
   const handlePlayMovie = (movie: Movie) => {
     navigate(`/player/${movie.id}`);
+  };
+
+  const handleFiltersChange = (newFilters: SearchFiltersType) => {
+    setFilters(newFilters);
+  };
+
+  const applyFilters = (movies: Movie[]) => {
+    let filtered = movies;
+
+    // Filter by genre
+    if (filters.genre) {
+      filtered = filtered.filter(movie => 
+        movie.genres && movie.genres.some((g: any) => g.name === filters.genre)
+      );
+    }
+
+    // Filter by minimum rating
+    if (filters.minRating > 0) {
+      filtered = filtered.filter(movie => 
+        (movie.voteAverage || 0) >= filters.minRating
+      );
+    }
+
+    // Filter by year
+    if (filters.year) {
+      filtered = filtered.filter(movie => {
+        const movieYear = movie.releaseDate ? new Date(movie.releaseDate).getFullYear().toString() : '';
+        return movieYear === filters.year;
+      });
+    }
+
+    // Sort results
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'rating':
+          return (b.voteAverage || 0) - (a.voteAverage || 0);
+        case 'release_date':
+          return new Date(b.releaseDate || '').getTime() - new Date(a.releaseDate || '').getTime();
+        case 'title':
+          return a.title.localeCompare(b.title);
+        default: // popularity
+          return (b.voteCount || 0) - (a.voteCount || 0);
+      }
+    });
+
+    return filtered;
   };
 
   return (
@@ -57,6 +111,20 @@ export default function Search() {
 
       {/* Search Results */}
       <div className="p-4">
+        {/* Filter Controls */}
+        {debouncedQuery && searchResults?.movies && searchResults.movies.length > 0 && (
+          <div className="mb-6 flex justify-between items-center">
+            <p className="text-gray-300">
+              {applyFilters(searchResults.movies).length} results found
+            </p>
+            <SearchFilters
+              onFiltersChange={handleFiltersChange}
+              isVisible={showFilters}
+              onToggle={() => setShowFilters(!showFilters)}
+            />
+          </div>
+        )}
+
         {!debouncedQuery && (
           <div className="text-center py-12">
             <i className="fas fa-search text-4xl text-gray-400 mb-4"></i>

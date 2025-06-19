@@ -5,6 +5,7 @@ import { useTelegram } from '@/hooks/use-telegram';
 import { Movie } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { MovieRecommendations } from '@/components/movie-recommendations';
 
 export default function MovieDetail() {
   const [, navigate] = useLocation();
@@ -264,6 +265,13 @@ export default function MovieDetail() {
             </div>
           </div>
         )}
+
+        {/* Recommendations */}
+        <MovieRecommendations 
+          currentMovieId={movie.id}
+          genre={movie.genres && movie.genres.length > 0 ? movie.genres[0].name : undefined}
+          limit={6}
+        />
       </div>
     </div>
   );

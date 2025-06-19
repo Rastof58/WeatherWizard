@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import Home from "@/pages/home";
 import Search from "@/pages/search";
 import Categories from "@/pages/categories";
+import Trending from "@/pages/trending";
 import MovieDetail from "@/pages/movie-detail";
 import VideoPlayer from "@/pages/video-player";
 import WatchlistPage from "@/pages/watchlist";
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/search" component={Search} />
         <Route path="/categories" component={Categories} />
+        <Route path="/trending" component={Trending} />
         <Route path="/watchlist" component={WatchlistPage} />
         <Route path="/profile" component={Profile} />
         <Route path="/movie/:id" component={MovieDetail} />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { MovieCard } from '@/components/movie-card';
+import { MovieRecommendations } from '@/components/movie-recommendations';
 import { useTelegram } from '@/hooks/use-telegram';
 import { Movie, WatchProgress } from '@shared/schema';
 
@@ -254,6 +255,13 @@ export default function Home() {
             </div>
           )}
         </section>
+
+        {/* Recommendations */}
+        {user && (
+          <section>
+            <MovieRecommendations limit={6} />
+          </section>
+        )}
 
       </div>
     </div>
