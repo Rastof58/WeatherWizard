@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <title>CineMini - Telegram Movie Streaming App</title>
+    <meta name="description" content="Stream your favorite movies and TV shows directly in Telegram with CineMini" />
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#E50914" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="CineMini - Telegram Movie Streaming" />
+    <meta property="og:description" content="Stream movies and TV shows directly in Telegram" />
+    <meta property="og:type" content="website" />
+    
+    <style>
+      /* Ensure no scrolling issues on mobile */
+      html, body {
+        height: 100%;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Telegram WebApp specific styles */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #141414;
+        color: #ffffff;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      
+      /* Loading spinner */
+      .loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+      }
+      
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #333;
+        border-top: 4px solid #E50914;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide loading spinner once app loads */
+      .loaded .loading-spinner {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>
