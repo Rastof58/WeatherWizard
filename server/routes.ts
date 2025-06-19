@@ -19,6 +19,273 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Serve admin panel FIRST - before any other routes
+  app.get('/admin*', (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMini Admin Panel</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .btn { @apply px-4 py-2 rounded font-medium transition-colors; }
+        .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
+        .form-input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="admin-root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function LoginForm({ onLogin }) {
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
+            
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError('');
+                
+                try {
+                    const response = await fetch('/api/admin/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        onLogin(data.admin);
+                    } else {
+                        setError(data.error || 'Login failed');
+                    }
+                } catch (err) {
+                    setError('Network error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                    <div className="max-w-md w-full space-y-8">
+                        <div>
+                            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                                CineMini Admin Panel
+                            </h2>
+                            <p className="mt-2 text-center text-sm text-gray-600">
+                                Sign in to manage your movie streaming platform
+                            </p>
+                        </div>
+                        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                    Username
+                                </label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    required
+                                    className="form-input mt-1"
+                                    placeholder="Enter your username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    required
+                                    className="form-input mt-1"
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                            {error && (
+                                <div className="text-red-600 text-sm text-center">{error}</div>
+                            )}
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn btn-primary w-full"
+                                >
+                                    {loading ? 'Signing in...' : 'Sign in'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+        
+        function Dashboard({ admin, onLogout }) {
+            const [stats, setStats] = useState(null);
+            const [loading, setLoading] = useState(true);
+            
+            useEffect(() => {
+                fetchStats();
+            }, []);
+            
+            const fetchStats = async () => {
+                try {
+                    const response = await fetch('/api/admin/analytics');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setStats(data);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch stats:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const handleLogout = async () => {
+                try {
+                    await fetch('/api/admin/auth/logout', { method: 'POST' });
+                    onLogout();
+                } catch (err) {
+                    console.error('Logout failed:', err);
+                }
+            };
+            
+            return (
+                <div className="min-h-screen bg-gray-100">
+                    <nav className="bg-white shadow">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="flex justify-between h-16">
+                                <div className="flex items-center">
+                                    <h1 className="text-xl font-semibold">CineMini Admin</h1>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <span className="text-gray-700">Welcome, {admin.username}</span>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="btn btn-primary"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                    
+                    <main className="max-w-7xl mx-auto py-6 px-4">
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+                            <p className="text-gray-600">Overview of your movie streaming platform</p>
+                        </div>
+                        
+                        {loading ? (
+                            <div className="text-center py-8">Loading statistics...</div>
+                        ) : stats ? (
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
+                                    <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <h3 className="text-lg font-medium text-gray-900">Total Movies</h3>
+                                    <p className="text-3xl font-bold text-green-600">{stats.totalMovies}</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <h3 className="text-lg font-medium text-gray-900">Active Users</h3>
+                                    <p className="text-3xl font-bold text-purple-600">{stats.activeUsers}</p>
+                                </div>
+                                <div className="bg-white p-6 rounded-lg shadow">
+                                    <h3 className="text-lg font-medium text-gray-900">Watch Hours</h3>
+                                    <p className="text-3xl font-bold text-red-600">{stats.totalWatchHours}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                Failed to load statistics
+                            </div>
+                        )}
+                        
+                        <div className="mt-8 bg-white p-6 rounded-lg shadow">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 border rounded-lg">
+                                    <h4 className="font-medium">Movie Management</h4>
+                                    <p className="text-sm text-gray-600">Add, edit, and manage movies</p>
+                                </div>
+                                <div className="p-4 border rounded-lg">
+                                    <h4 className="font-medium">User Management</h4>
+                                    <p className="text-sm text-gray-600">View and manage user accounts</p>
+                                </div>
+                                <div className="p-4 border rounded-lg">
+                                    <h4 className="font-medium">Analytics</h4>
+                                    <p className="text-sm text-gray-600">View detailed analytics and reports</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+        
+        function AdminApp() {
+            const [admin, setAdmin] = useState(null);
+            const [loading, setLoading] = useState(true);
+            
+            useEffect(() => {
+                checkAuth();
+            }, []);
+            
+            const checkAuth = async () => {
+                try {
+                    const response = await fetch('/api/admin/auth/me');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAdmin(data.admin);
+                    }
+                } catch (err) {
+                    console.error('Auth check failed:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            if (loading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="text-center">Loading...</div>
+                    </div>
+                );
+            }
+            
+            return admin ? (
+                <Dashboard admin={admin} onLogout={() => setAdmin(null)} />
+            ) : (
+                <LoginForm onLogin={setAdmin} />
+            );
+        }
+        
+        ReactDOM.render(<AdminApp />, document.getElementById('admin-root'));
+    </script>
+</body>
+</html>
+    `);
+  });
+
   // Auth routes
   app.post("/api/auth/telegram", async (req, res) => {
     try {
@@ -76,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      req.session.adminId = admin[0].id;
+      (req.session as any).adminId = admin[0].id;
       res.json({ 
         success: true, 
         admin: { 
@@ -98,11 +365,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/admin/auth/me", async (req: AuthenticatedRequest, res) => {
-    if (!req.session.adminId) {
+    if (!(req.session as any).adminId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
     
-    const admin = await db.select().from(admins).where(eq(admins.id, req.session.adminId)).limit(1);
+    const admin = await db.select().from(admins).where(eq(admins.id, (req.session as any).adminId)).limit(1);
     if (!admin.length) {
       return res.status(404).json({ error: "Admin not found" });
     }
@@ -642,272 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve admin panel
-  app.get('/admin*', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineMini Admin Panel</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .btn { @apply px-4 py-2 rounded font-medium transition-colors; }
-        .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
-        .form-input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500; }
-    </style>
-</head>
-<body class="bg-gray-100">
-    <div id="admin-root"></div>
-    
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        
-        function LoginForm({ onLogin }) {
-            const [username, setUsername] = useState('');
-            const [password, setPassword] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [error, setError] = useState('');
-            
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setLoading(true);
-                setError('');
-                
-                try {
-                    const response = await fetch('/api/admin/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, password })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        onLogin(data.admin);
-                    } else {
-                        setError(data.error || 'Login failed');
-                    }
-                } catch (err) {
-                    setError('Network error');
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                    <div className="max-w-md w-full space-y-8">
-                        <div>
-                            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                                CineMini Admin Panel
-                            </h2>
-                            <p className="mt-2 text-center text-sm text-gray-600">
-                                Sign in to manage your movie streaming platform
-                            </p>
-                        </div>
-                        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                            <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                                    Username
-                                </label>
-                                <input
-                                    id="username"
-                                    type="text"
-                                    required
-                                    className="form-input mt-1"
-                                    placeholder="Enter your username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                    Password
-                                </label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    className="form-input mt-1"
-                                    placeholder="Enter your password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
-                            {error && (
-                                <div className="text-red-600 text-sm text-center">{error}</div>
-                            )}
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="btn btn-primary w-full"
-                                >
-                                    {loading ? 'Signing in...' : 'Sign in'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            );
-        }
-        
-        function Dashboard({ admin, onLogout }) {
-            const [stats, setStats] = useState(null);
-            const [loading, setLoading] = useState(true);
-            
-            useEffect(() => {
-                fetchStats();
-            }, []);
-            
-            const fetchStats = async () => {
-                try {
-                    const response = await fetch('/api/admin/analytics');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setStats(data);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch stats:', err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            const handleLogout = async () => {
-                try {
-                    await fetch('/api/admin/auth/logout', { method: 'POST' });
-                    onLogout();
-                } catch (err) {
-                    console.error('Logout failed:', err);
-                }
-            };
-            
-            return (
-                <div className="min-h-screen bg-gray-100">
-                    <nav className="bg-white shadow">
-                        <div className="max-w-7xl mx-auto px-4">
-                            <div className="flex justify-between h-16">
-                                <div className="flex items-center">
-                                    <h1 className="text-xl font-semibold">CineMini Admin</h1>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                    <span className="text-gray-700">Welcome, {admin.username}</span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="btn btn-primary"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
-                    
-                    <main className="max-w-7xl mx-auto py-6 px-4">
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-                            <p className="text-gray-600">Overview of your movie streaming platform</p>
-                        </div>
-                        
-                        {loading ? (
-                            <div className="text-center py-8">Loading statistics...</div>
-                        ) : stats ? (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
-                                    <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Total Movies</h3>
-                                    <p className="text-3xl font-bold text-green-600">{stats.totalMovies}</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Active Users</h3>
-                                    <p className="text-3xl font-bold text-purple-600">{stats.activeUsers}</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Watch Hours</h3>
-                                    <p className="text-3xl font-bold text-red-600">{stats.totalWatchHours}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 text-gray-500">
-                                Failed to load statistics
-                            </div>
-                        )}
-                        
-                        <div className="mt-8 bg-white p-6 rounded-lg shadow">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">Movie Management</h4>
-                                    <p className="text-sm text-gray-600">Add, edit, and manage movies</p>
-                                </div>
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">User Management</h4>
-                                    <p className="text-sm text-gray-600">View and manage user accounts</p>
-                                </div>
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">Analytics</h4>
-                                    <p className="text-sm text-gray-600">View detailed analytics and reports</p>
-                                </div>
-                            </div>
-                        </div>
-                    </main>
-                </div>
-            );
-        }
-        
-        function AdminApp() {
-            const [admin, setAdmin] = useState(null);
-            const [loading, setLoading] = useState(true);
-            
-            useEffect(() => {
-                checkAuth();
-            }, []);
-            
-            const checkAuth = async () => {
-                try {
-                    const response = await fetch('/api/admin/auth/me');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setAdmin(data.admin);
-                    }
-                } catch (err) {
-                    console.error('Auth check failed:', err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            if (loading) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center">
-                        <div className="text-center">Loading...</div>
-                    </div>
-                );
-            }
-            
-            return admin ? (
-                <Dashboard admin={admin} onLogout={() => setAdmin(null)} />
-            ) : (
-                <LoginForm onLogin={setAdmin} />
-            );
-        }
-        
-        ReactDOM.render(<AdminApp />, document.getElementById('admin-root'));
-    </script>
-</body>
-</html>
-    `);
-  });
+
 
   const httpServer = createServer(app);
   return httpServer;
