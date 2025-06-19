@@ -33,10 +33,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .btn { @apply px-4 py-2 rounded font-medium transition-colors; }
-        .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
-        .form-input { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0;
+            padding: 0;
+        }
+        .btn { 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: 500; 
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary { 
+            background-color: #2563eb; 
+            color: white; 
+        }
+        .btn-primary:hover { 
+            background-color: #1d4ed8; 
+        }
+        .btn-primary:disabled { 
+            background-color: #9ca3af; 
+            cursor: not-allowed; 
+        }
+        .form-input { 
+            width: 100%; 
+            padding: 8px 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px; 
+            outline: none;
+        }
+        .form-input:focus { 
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            text-align: center;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -78,57 +135,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                    <div className="max-w-md w-full space-y-8">
-                        <div>
-                            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                <div style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#f9fafb',
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        maxWidth: '400px',
+                        width: '100%',
+                        backgroundColor: 'white',
+                        padding: '32px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                            <h2 style={{
+                                fontSize: '30px',
+                                fontWeight: 'bold',
+                                color: '#111827',
+                                marginBottom: '8px'
+                            }}>
                                 CineMini Admin Panel
                             </h2>
-                            <p className="mt-2 text-center text-sm text-gray-600">
+                            <p style={{
+                                fontSize: '14px',
+                                color: '#6b7280'
+                            }}>
                                 Sign in to manage your movie streaming platform
                             </p>
                         </div>
-                        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    color: '#374151',
+                                    marginBottom: '4px'
+                                }}>
                                     Username
                                 </label>
                                 <input
-                                    id="username"
                                     type="text"
                                     required
-                                    className="form-input mt-1"
+                                    className="form-input"
                                     placeholder="Enter your username"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                 />
                             </div>
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                <label style={{
+                                    display: 'block',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    color: '#374151',
+                                    marginBottom: '4px'
+                                }}>
                                     Password
                                 </label>
                                 <input
-                                    id="password"
                                     type="password"
                                     required
-                                    className="form-input mt-1"
+                                    className="form-input"
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
                             {error && (
-                                <div className="text-red-600 text-sm text-center">{error}</div>
+                                <div style={{
+                                    color: '#dc2626',
+                                    fontSize: '14px',
+                                    textAlign: 'center',
+                                    padding: '8px',
+                                    backgroundColor: '#fef2f2',
+                                    borderRadius: '4px'
+                                }}>
+                                    {error}
+                                </div>
                             )}
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="btn btn-primary w-full"
-                                >
-                                    {loading ? 'Signing in...' : 'Sign in'}
-                                </button>
-                            </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="btn btn-primary"
+                                style={{ width: '100%' }}
+                            >
+                                {loading ? 'Signing in...' : 'Sign in'}
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -167,73 +264,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             
             return (
-                <div className="min-h-screen bg-gray-100">
-                    <nav className="bg-white shadow">
-                        <div className="max-w-7xl mx-auto px-4">
-                            <div className="flex justify-between h-16">
-                                <div className="flex items-center">
-                                    <h1 className="text-xl font-semibold">CineMini Admin</h1>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                    <span className="text-gray-700">Welcome, {admin.username}</span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="btn btn-primary"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
+                <div style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f3f4f6'
+                }}>
+                    <nav style={{
+                        backgroundColor: 'white',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        padding: '0 20px'
+                    }}>
+                        <div style={{
+                            maxWidth: '1200px',
+                            margin: '0 auto',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            height: '64px'
+                        }}>
+                            <h1 style={{
+                                fontSize: '20px',
+                                fontWeight: '600',
+                                color: '#111827'
+                            }}>
+                                CineMini Admin
+                            </h1>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px'
+                            }}>
+                                <span style={{ color: '#374151' }}>
+                                    Welcome, {admin.username}
+                                </span>
+                                <button
+                                    onClick={handleLogout}
+                                    className="btn btn-primary"
+                                >
+                                    Logout
+                                </button>
                             </div>
                         </div>
                     </nav>
                     
-                    <main className="max-w-7xl mx-auto py-6 px-4">
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-                            <p className="text-gray-600">Overview of your movie streaming platform</p>
+                    <main style={{
+                        maxWidth: '1200px',
+                        margin: '0 auto',
+                        padding: '24px 20px'
+                    }}>
+                        <div style={{ marginBottom: '32px' }}>
+                            <h2 style={{
+                                fontSize: '24px',
+                                fontWeight: 'bold',
+                                color: '#111827',
+                                marginBottom: '4px'
+                            }}>
+                                Dashboard
+                            </h2>
+                            <p style={{
+                                color: '#6b7280',
+                                fontSize: '16px'
+                            }}>
+                                Overview of your movie streaming platform
+                            </p>
                         </div>
                         
                         {loading ? (
-                            <div className="text-center py-8">Loading statistics...</div>
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '32px',
+                                fontSize: '16px',
+                                color: '#6b7280'
+                            }}>
+                                Loading statistics...
+                            </div>
                         ) : stats ? (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
-                                    <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
+                            <div className="grid-4" style={{ marginBottom: '32px' }}>
+                                <div className="stat-card">
+                                    <h3 style={{
+                                        fontSize: '18px',
+                                        fontWeight: '500',
+                                        color: '#111827',
+                                        marginBottom: '8px'
+                                    }}>
+                                        Total Users
+                                    </h3>
+                                    <p style={{
+                                        fontSize: '36px',
+                                        fontWeight: 'bold',
+                                        color: '#2563eb'
+                                    }}>
+                                        {stats.totalUsers}
+                                    </p>
                                 </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Total Movies</h3>
-                                    <p className="text-3xl font-bold text-green-600">{stats.totalMovies}</p>
+                                <div className="stat-card">
+                                    <h3 style={{
+                                        fontSize: '18px',
+                                        fontWeight: '500',
+                                        color: '#111827',
+                                        marginBottom: '8px'
+                                    }}>
+                                        Total Movies
+                                    </h3>
+                                    <p style={{
+                                        fontSize: '36px',
+                                        fontWeight: 'bold',
+                                        color: '#059669'
+                                    }}>
+                                        {stats.totalMovies}
+                                    </p>
                                 </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Active Users</h3>
-                                    <p className="text-3xl font-bold text-purple-600">{stats.activeUsers}</p>
+                                <div className="stat-card">
+                                    <h3 style={{
+                                        fontSize: '18px',
+                                        fontWeight: '500',
+                                        color: '#111827',
+                                        marginBottom: '8px'
+                                    }}>
+                                        Active Users
+                                    </h3>
+                                    <p style={{
+                                        fontSize: '36px',
+                                        fontWeight: 'bold',
+                                        color: '#7c3aed'
+                                    }}>
+                                        {stats.activeUsers}
+                                    </p>
                                 </div>
-                                <div className="bg-white p-6 rounded-lg shadow">
-                                    <h3 className="text-lg font-medium text-gray-900">Watch Hours</h3>
-                                    <p className="text-3xl font-bold text-red-600">{stats.totalWatchHours}</p>
+                                <div className="stat-card">
+                                    <h3 style={{
+                                        fontSize: '18px',
+                                        fontWeight: '500',
+                                        color: '#111827',
+                                        marginBottom: '8px'
+                                    }}>
+                                        Watch Hours
+                                    </h3>
+                                    <p style={{
+                                        fontSize: '36px',
+                                        fontWeight: 'bold',
+                                        color: '#dc2626'
+                                    }}>
+                                        {stats.totalWatchHours}
+                                    </p>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-gray-500">
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '32px',
+                                color: '#6b7280'
+                            }}>
                                 Failed to load statistics
                             </div>
                         )}
                         
-                        <div className="mt-8 bg-white p-6 rounded-lg shadow">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">Movie Management</h4>
-                                    <p className="text-sm text-gray-600">Add, edit, and manage movies</p>
+                        <div className="card">
+                            <h3 style={{
+                                fontSize: '18px',
+                                fontWeight: '500',
+                                color: '#111827',
+                                marginBottom: '16px'
+                            }}>
+                                Quick Actions
+                            </h3>
+                            <div className="grid-3">
+                                <div style={{
+                                    padding: '16px',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '6px'
+                                }}>
+                                    <h4 style={{
+                                        fontWeight: '500',
+                                        marginBottom: '4px'
+                                    }}>
+                                        Movie Management
+                                    </h4>
+                                    <p style={{
+                                        fontSize: '14px',
+                                        color: '#6b7280'
+                                    }}>
+                                        Add, edit, and manage movies
+                                    </p>
                                 </div>
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">User Management</h4>
-                                    <p className="text-sm text-gray-600">View and manage user accounts</p>
+                                <div style={{
+                                    padding: '16px',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '6px'
+                                }}>
+                                    <h4 style={{
+                                        fontWeight: '500',
+                                        marginBottom: '4px'
+                                    }}>
+                                        User Management
+                                    </h4>
+                                    <p style={{
+                                        fontSize: '14px',
+                                        color: '#6b7280'
+                                    }}>
+                                        View and manage user accounts
+                                    </p>
                                 </div>
-                                <div className="p-4 border rounded-lg">
-                                    <h4 className="font-medium">Analytics</h4>
-                                    <p className="text-sm text-gray-600">View detailed analytics and reports</p>
+                                <div style={{
+                                    padding: '16px',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '6px'
+                                }}>
+                                    <h4 style={{
+                                        fontWeight: '500',
+                                        marginBottom: '4px'
+                                    }}>
+                                        Analytics
+                                    </h4>
+                                    <p style={{
+                                        fontSize: '14px',
+                                        color: '#6b7280'
+                                    }}>
+                                        View detailed analytics and reports
+                                    </p>
                                 </div>
                             </div>
                         </div>
