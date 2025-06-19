@@ -129,6 +129,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search route must come before the :id route to avoid conflicts
+  app.get("/api/movies/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: "Query parameter is required" });
+      }
+
+      const response = await fetch(`${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.status_message || "Failed to search movies");
+      }
+      
+      const movies = [];
+      for (const item of data.results.slice(0, 10)) {
+        if (item.media_type === 'person') continue;
+        
+        let movie = await storage.getMovieByTmdbId(item.id);
+        if (!movie) {
+          movie = await storage.createMovie({
+            tmdbId: item.id,
+            title: item.title || item.name,
+            overview: item.overview,
+            posterPath: item.poster_path,
+            backdropPath: item.backdrop_path,
+            releaseDate: item.release_date || item.first_air_date,
+            voteAverage: item.vote_average,
+            voteCount: item.vote_count,
+            isMovie: item.media_type === 'movie',
+            runtime: null,
+            genres: [],
+            cast: [],
+          });
+        }
+        movies.push(movie);
+      }
+      
+      res.json({ movies });
+    } catch (error) {
+      console.error("Error searching movies:", error);
+      res.status(500).json({ error: "Failed to search movies" });
+    }
+  });
+
   app.get("/api/movies/:id", async (req, res) => {
     try {
       const movieId = parseInt(req.params.id);
@@ -184,51 +230,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching movie details:", error);
       res.status(500).json({ error: "Failed to fetch movie details" });
-    }
-  });
-
-  app.get("/api/movies/search", async (req, res) => {
-    try {
-      const query = req.query.q as string;
-      if (!query) {
-        return res.status(400).json({ error: "Query parameter is required" });
-      }
-
-      const response = await fetch(`${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.status_message || "Failed to search movies");
-      }
-      
-      const movies = [];
-      for (const item of data.results.slice(0, 10)) {
-        if (item.media_type === 'person') continue;
-        
-        let movie = await storage.getMovieByTmdbId(item.id);
-        if (!movie) {
-          movie = await storage.createMovie({
-            tmdbId: item.id,
-            title: item.title || item.name,
-            overview: item.overview,
-            posterPath: item.poster_path,
-            backdropPath: item.backdrop_path,
-            releaseDate: item.release_date || item.first_air_date,
-            voteAverage: item.vote_average,
-            voteCount: item.vote_count,
-            isMovie: item.media_type === 'movie',
-            runtime: null,
-            genres: [],
-            cast: [],
-          });
-        }
-        movies.push(movie);
-      }
-      
-      res.json({ movies });
-    } catch (error) {
-      console.error("Error searching movies:", error);
-      res.status(500).json({ error: "Failed to search movies" });
     }
   });
 
