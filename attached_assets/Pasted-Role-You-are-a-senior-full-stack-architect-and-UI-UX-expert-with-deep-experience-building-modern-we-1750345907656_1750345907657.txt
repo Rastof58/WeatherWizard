@@ -1,0 +1,99 @@
+Role: You are a senior full-stack architect and UI/UX expert with deep experience building modern web admin dashboards for SaaS, streaming, and analytics platforms. Your task is to help me build a complete Admin Panel for my Telegram Mini App for streaming movies and series.
+
+🎯 Goal: Generate project structure, boilerplate React code, and working examples for a production-ready Admin Panel MVP to manage users, content, and analytics.
+
+✅ Requirements
+📁 Project Structure
+Propose clean, modular project structure for the Admin Panel frontend.
+
+Use React as the frontend framework.
+
+Suggest folder and file naming conventions with brief explanation.
+
+⚙️ Admin Panel Features
+Authentication System (username/password or Telegram user ID whitelist)
+
+Dashboard Home:
+
+Quick stats: Users, Active Sessions, Popular Movies, API Status.
+
+User Management:
+
+List of users.
+
+Ban/block users.
+
+Reset watch progress.
+
+Movie/Series Management:
+
+View/edit movie metadata.
+
+Hide/unhide content.
+
+Add custom movies manually.
+
+Embed Source Control (Advanced):
+
+Switch embed providers.
+
+Add alternate streams for specific movies.
+
+Analytics/Reports:
+
+Most watched movies.
+
+Popular genres.
+
+Search trends.
+
+Notifications:
+
+Ability to send Telegram Bot announcements to users.
+
+Settings:
+
+API key management (TMDB, VidSrc, others).
+
+Rate limiting config.
+
+🎨 UI Design Recommendations
+Component library suggestion: Material UI or Ant Design (recommend best fit).
+
+Charts/Graphs library for analytics: Recharts or Chart.js.
+
+Example:
+
+Sidebar navigation.
+
+Stats cards/widgets.
+
+Table/grid for users/movies.
+
+🗂 API Layer
+Example Axios (or fetch) API call pattern.
+
+Boilerplate for secured API requests (JWT token or session).
+
+Example of authenticated route using React Router or similar.
+
+🚀 Deployment Recommendations
+Recommend deployment options (Vercel, Render, Railway or others).
+
+Example Dockerfile or Vercel config for deploying Admin Panel separately or together with backend.
+
+📄 Output Format
+Use Markdown.
+
+Clear section labels (e.g., ## Project Structure, ## Authentication Example, etc.).
+
+Concise code examples, expandable by me later.
+
+⚙️ Constraints
+Prioritize security in all API communication.
+
+Prioritize Telegram Mini App integration compatibility where necessary.
+
+Focus on scalable, maintainable architecture for future feature expansion.
+
+✅ Start with project structure, folder layout, and core dashboard boilerplate first.
