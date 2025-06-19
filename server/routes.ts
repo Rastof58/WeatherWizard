@@ -10,7 +10,7 @@ interface AuthenticatedRequest extends Request {
   } & any;
 }
 
-const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || "";
+const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || "6ed856acc634e8fbd3cb391dcafc5a01";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export async function registerRoutes(app: Express): Promise<Server> {

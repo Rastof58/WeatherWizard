@@ -1,0 +1,41 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+10:22:17 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Error fetching trending movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:22:28 AM [express] GET /api/movies/trending 500 in 276ms :: {"error":"Failed to fetch trending mov…
+Error fetching popular movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:100:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:22:28 AM [express] GET /api/movies/popular 500 in 235ms :: {"error":"Failed to fetch popular movie…
+Error fetching popular movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:100:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:22:32 AM [express] GET /api/movies/popular 500 in 93ms :: {"error":"Failed to fetch popular movies…
+Error fetching trending movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:22:32 AM [express] GET /api/movies/trending 500 in 97ms :: {"error":"Failed to fetch trending movi…
+Error fetching popular movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:100:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:25:29 AM [express] GET /api/movies/popular 500 in 135ms :: {"error":"Failed to fetch popular movie…
+Error fetching trending movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:25:29 AM [express] GET /api/movies/trending 500 in 138ms :: {"error":"Failed to fetch trending mov…
+Error fetching popular movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:100:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:26:12 AM [express] GET /api/movies/popular 500 in 177ms :: {"error":"Failed to fetch popular movie…
+Error fetching trending movies: Error: Invalid API key: You must be granted a valid key.
+    at <anonymous> (/home/runner/workspace/server/routes.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+10:26:12 AM [express] GET /api/movies/trending 500 in 246ms :: {"error":"Failed to fetch trending mov…
+^C
