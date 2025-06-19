@@ -1,7 +1,9 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertWatchProgressSchema } from "@shared/schema";
+import { insertUserSchema, insertWatchProgressSchema, users, movies, watchProgress, watchlist } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, sql } from "drizzle-orm";
 
 interface AuthenticatedRequest extends Request {
   session: {
@@ -440,6 +442,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error checking watchlist:", error);
       res.status(500).json({ error: "Failed to check watchlist" });
+    }
+  });
+
+  // Admin routes
+  app.get('/api/admin/analytics', async (req: AuthenticatedRequest, res) => {
+    try {
+      const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const totalMovies = await db.select({ count: sql<number>`count(*)` }).from(movies);
+      const activeUsers = await db.select({ count: sql<number>`count(distinct ${watchProgress.userId})` })
+        .from(watchProgress)
+        .where(sql`${watchProgress.updatedAt} > NOW() - INTERVAL '24 hours'`);
+      
+      const totalWatchHours = await db.select({ 
+        hours: sql<number>`sum(${watchProgress.currentTime}) / 3600` 
+      }).from(watchProgress);
+
+      res.json({
+        totalUsers: totalUsers[0]?.count || 0,
+        totalMovies: totalMovies[0]?.count || 0,
+        activeUsers: activeUsers[0]?.count || 0,
+        totalWatchHours: Math.round(totalWatchHours[0]?.hours || 0)
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+  });
+
+  app.get('/api/admin/movies', async (req: AuthenticatedRequest, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+      
+      const moviesResult = await db.select()
+        .from(movies)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(movies.createdAt));
+      
+      const totalCount = await db.select({ count: sql<number>`count(*)` }).from(movies);
+      
+      res.json({
+        movies: moviesResult,
+        total: totalCount[0]?.count || 0,
+        page,
+        limit,
+        hasNextPage: offset + limit < (totalCount[0]?.count || 0)
+      });
+    } catch (error) {
+      console.error('Error fetching admin movies:', error);
+      res.status(500).json({ error: 'Failed to fetch movies' });
+    }
+  });
+
+  app.put('/api/admin/movies/:id', async (req: AuthenticatedRequest, res) => {
+    try {
+      const movieId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const updatedMovie = await db.update(movies)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
+        .where(eq(movies.id, movieId))
+        .returning();
+      
+      if (updatedMovie.length === 0) {
+        return res.status(404).json({ error: 'Movie not found' });
+      }
+      
+      res.json({ movie: updatedMovie[0] });
+    } catch (error) {
+      console.error('Error updating movie:', error);
+      res.status(500).json({ error: 'Failed to update movie' });
+    }
+  });
+
+  app.delete('/api/admin/movies/:id', async (req: AuthenticatedRequest, res) => {
+    try {
+      const movieId = parseInt(req.params.id);
+      
+      // Delete related records first
+      await db.delete(watchProgress).where(eq(watchProgress.movieId, movieId));
+      await db.delete(watchlist).where(eq(watchlist.movieId, movieId));
+      
+      const deletedMovie = await db.delete(movies)
+        .where(eq(movies.id, movieId))
+        .returning();
+      
+      if (deletedMovie.length === 0) {
+        return res.status(404).json({ error: 'Movie not found' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting movie:', error);
+      res.status(500).json({ error: 'Failed to delete movie' });
+    }
+  });
+
+  app.get('/api/admin/analytics/watch-stats', async (req: AuthenticatedRequest, res) => {
+    try {
+      const topMovies = await db.select({
+        title: movies.title,
+        watchCount: sql<number>`count(${watchProgress.id})`,
+        avgRating: movies.voteAverage
+      })
+        .from(movies)
+        .leftJoin(watchProgress, eq(movies.id, watchProgress.movieId))
+        .groupBy(movies.id, movies.title, movies.voteAverage)
+        .orderBy(desc(sql`count(${watchProgress.id})`))
+        .limit(10);
+
+      const recentActivity = await db.select({
+        movieTitle: movies.title,
+        userCount: sql<number>`count(distinct ${watchProgress.userId})`,
+        timestamp: sql<string>`max(${watchProgress.updatedAt})`
+      })
+        .from(watchProgress)
+        .innerJoin(movies, eq(movies.id, watchProgress.movieId))
+        .where(sql`${watchProgress.updatedAt} > NOW() - INTERVAL '7 days'`)
+        .groupBy(movies.id, movies.title)
+        .orderBy(desc(sql`max(${watchProgress.updatedAt})`))
+        .limit(10);
+
+      res.json({
+        topMovies,
+        recentActivity
+      });
+    } catch (error) {
+      console.error('Error fetching watch stats:', error);
+      res.status(500).json({ error: 'Failed to fetch watch stats' });
     }
   });
 
