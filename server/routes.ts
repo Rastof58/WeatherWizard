@@ -132,6 +132,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/movies/:id", async (req, res) => {
     try {
       const movieId = parseInt(req.params.id);
+      
+      if (isNaN(movieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
       let movie = await storage.getMovie(movieId);
       
       if (!movie) {
@@ -231,6 +236,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/movies/:id/stream", async (req, res) => {
     try {
       const movieId = parseInt(req.params.id);
+      
+      if (isNaN(movieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
       const movie = await storage.getMovie(movieId);
       
       if (!movie) {
@@ -273,8 +283,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const { movieId, currentTime, duration, completed } = req.body;
+      const parsedMovieId = parseInt(movieId);
+      
+      if (isNaN(parsedMovieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
       const progressData = insertWatchProgressSchema.parse({
-        ...req.body,
+        movieId: parsedMovieId,
+        currentTime: currentTime || 0,
+        duration: duration || 0,
+        completed: completed || false,
         userId: req.session.userId
       });
       
@@ -308,7 +328,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { movieId } = req.body;
-      const item = await storage.addToWatchlist(req.session.userId, movieId);
+      const parsedMovieId = parseInt(movieId);
+      
+      if (isNaN(parsedMovieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
+      const item = await storage.addToWatchlist(req.session.userId, parsedMovieId);
       res.json({ item });
     } catch (error) {
       console.error("Error adding to watchlist:", error);
@@ -323,6 +349,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const movieId = parseInt(req.params.movieId);
+      
+      if (isNaN(movieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
       await storage.removeFromWatchlist(req.session.userId, movieId);
       res.json({ success: true });
     } catch (error) {
@@ -338,6 +369,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const movieId = parseInt(req.params.movieId);
+      
+      if (isNaN(movieId)) {
+        return res.status(400).json({ error: "Invalid movie ID" });
+      }
+      
       const inWatchlist = await storage.isInWatchlist(req.session.userId, movieId);
       res.json({ inWatchlist });
     } catch (error) {

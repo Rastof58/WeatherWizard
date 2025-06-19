@@ -1,0 +1,114 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+10:29:29 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+10:29:39 AM [express] GET /api/movies/popular 304 in 3363ms :: {"movies":[{"id":1,"tmdbId":574475,"ti…
+10:29:39 AM [express] GET /api/movies/trending 304 in 3382ms :: {"movies":[{"id":1,"tmdbId":574475,"t…
+10:29:42 AM [express] GET /api/movies/1/stream 200 in 146ms :: {"streamUrl":"https://vidsrc.to/embed/…
+10:30:32 AM [express] GET /api/movies/popular 304 in 3424ms :: {"movies":[{"id":1,"tmdbId":574475,"ti…
+10:30:32 AM [express] GET /api/movies/trending 304 in 3438ms :: {"movies":[{"id":1,"tmdbId":574475,"t…
+Error fetching movie details: error: invalid input syntax for type integer: "NaN"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getMovie (/home/runner/workspace/server/storage.ts:64:21)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:135:19) {
+  length: 146,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+10:31:01 AM [express] GET /api/movies/search 500 in 595ms :: {"error":"Failed to fetch movie details"}
+Error fetching movie details: error: invalid input syntax for type integer: "NaN"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getMovie (/home/runner/workspace/server/storage.ts:64:21)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:135:19) {
+  length: 146,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+10:31:02 AM [express] GET /api/movies/search 500 in 594ms :: {"error":"Failed to fetch movie details"}
+Error fetching movie details: error: invalid input syntax for type integer: "NaN"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getMovie (/home/runner/workspace/server/storage.ts:64:21)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:135:19) {
+  length: 146,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+10:31:03 AM [express] GET /api/movies/search 500 in 596ms :: {"error":"Failed to fetch movie details"}
+Error fetching movie details: error: invalid input syntax for type integer: "NaN"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getMovie (/home/runner/workspace/server/storage.ts:64:21)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:135:19) {
+  length: 146,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+10:31:04 AM [express] GET /api/movies/search 500 in 588ms :: {"error":"Failed to fetch movie details"}
+  
