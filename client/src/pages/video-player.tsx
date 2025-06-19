@@ -26,6 +26,9 @@ export default function VideoPlayer() {
     enabled: !!id,
   });
 
+  const streamUrl = (streamData as any)?.streamUrl;
+  const movieTitle = (streamData as any)?.title;
+
   const { data: watchProgressData } = useQuery({
     queryKey: [`/api/watch-progress`],
     enabled: !!user,

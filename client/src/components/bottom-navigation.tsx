@@ -10,6 +10,7 @@ export const BottomNavigation = ({ onNavigate }: BottomNavigationProps) => {
   const navItems = [
     { path: '/', icon: 'fas fa-home', label: 'Home' },
     { path: '/search', icon: 'fas fa-search', label: 'Search' },
+    { path: '/categories', icon: 'fas fa-th-large', label: 'Categories' },
     { path: '/watchlist', icon: 'fas fa-bookmark', label: 'My List' },
     { path: '/profile', icon: 'fas fa-user', label: 'Profile' },
   ];

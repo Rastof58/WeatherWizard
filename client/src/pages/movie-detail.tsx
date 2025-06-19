@@ -4,6 +4,7 @@ import { useLocation, useParams } from 'wouter';
 import { useTelegram } from '@/hooks/use-telegram';
 import { Movie } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MovieDetail() {
   const [, navigate] = useLocation();
@@ -11,6 +12,7 @@ export default function MovieDetail() {
   const { user } = useTelegram();
   const queryClient = useQueryClient();
   const [imageError, setImageError] = useState(false);
+  const { toast } = useToast();
 
   const { data: movieData, isLoading } = useQuery({
     queryKey: [`/api/movies/${id}`],
@@ -29,6 +31,17 @@ export default function MovieDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/watchlist/check/${id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/watchlist'] });
+      toast({
+        title: "Added to watchlist",
+        description: "Movie has been added to your watchlist",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add movie to watchlist",
+        variant: "destructive",
+      });
     },
   });
 
@@ -39,11 +52,22 @@ export default function MovieDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/watchlist/check/${id}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/watchlist'] });
+      toast({
+        title: "Removed from watchlist",
+        description: "Movie has been removed from your watchlist",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove movie from watchlist",
+        variant: "destructive",
+      });
     },
   });
 
-  const movie = movieData?.movie as Movie;
-  const isInWatchlist = watchlistData?.inWatchlist;
+  const movie = (movieData as any)?.movie as Movie;
+  const isInWatchlist = (watchlistData as any)?.inWatchlist;
 
   const handlePlay = () => {
     navigate(`/player/${id}`);
@@ -58,11 +82,11 @@ export default function MovieDetail() {
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if (navigator.share && movie) {
       try {
         await navigator.share({
-          title: movie?.title,
-          text: movie?.overview,
+          title: movie.title,
+          text: `Check out ${movie.title} on CineMini`,
           url: window.location.href,
         });
       } catch (error) {
@@ -73,14 +97,10 @@ export default function MovieDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-netflix-black text-white">
-        <div className="animate-pulse">
-          <div className="h-64 bg-gray-800"></div>
-          <div className="p-4 space-y-4">
-            <div className="h-8 bg-gray-800 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-800 rounded w-1/2"></div>
-            <div className="h-20 bg-gray-800 rounded"></div>
-          </div>
+      <div className="min-h-screen bg-netflix-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <i className="fas fa-spinner fa-spin text-4xl text-netflix-red mb-4"></i>
+          <p className="text-gray-400">Loading movie details...</p>
         </div>
       </div>
     );
@@ -90,11 +110,12 @@ export default function MovieDetail() {
     return (
       <div className="min-h-screen bg-netflix-black text-white flex items-center justify-center">
         <div className="text-center">
-          <i className="fas fa-film text-4xl text-gray-400 mb-4"></i>
-          <p className="text-gray-400">Movie not found</p>
-          <button 
+          <i className="fas fa-exclamation-triangle text-4xl text-gray-400 mb-4"></i>
+          <h2 className="text-xl font-semibold mb-2">Movie Not Found</h2>
+          <p className="text-gray-400 mb-6">The requested movie could not be found.</p>
+          <button
             onClick={() => navigate('/')}
-            className="mt-4 px-4 py-2 bg-netflix-red rounded-lg"
+            className="bg-netflix-red hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
           >
             Go Home
           </button>
@@ -162,11 +183,14 @@ export default function MovieDetail() {
                 <span>{movie.voteAverage.toFixed(1)}</span>
               </div>
             )}
+            <span className="px-2 py-1 bg-netflix-gray rounded text-xs">
+              {movie.isMovie ? 'Movie' : 'TV Show'}
+            </span>
           </div>
           
           {movie.genres && movie.genres.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {movie.genres.map((genre) => (
+              {movie.genres.map((genre: any) => (
                 <span key={genre.id} className="px-3 py-1 bg-netflix-gray rounded-full text-sm">
                   {genre.name}
                 </span>
@@ -184,13 +208,21 @@ export default function MovieDetail() {
             <i className="fas fa-play mr-2"></i>
             Play
           </button>
-          <button 
-            onClick={handleWatchlistToggle}
-            disabled={addToWatchlistMutation.isPending || removeFromWatchlistMutation.isPending}
-            className="px-4 py-3 bg-netflix-gray hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <i className={`fas ${isInWatchlist ? 'fa-check' : 'fa-plus'}`}></i>
-          </button>
+          
+          {user && (
+            <button 
+              onClick={handleWatchlistToggle}
+              disabled={addToWatchlistMutation.isPending || removeFromWatchlistMutation.isPending}
+              className="px-4 py-3 bg-netflix-gray hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {addToWatchlistMutation.isPending || removeFromWatchlistMutation.isPending ? (
+                <i className="fas fa-spinner fa-spin"></i>
+              ) : (
+                <i className={`fas ${isInWatchlist ? 'fa-check' : 'fa-plus'}`}></i>
+              )}
+            </button>
+          )}
+          
           <button 
             onClick={handleShare}
             className="px-4 py-3 bg-netflix-gray hover:bg-gray-600 rounded-lg transition-colors"
@@ -199,7 +231,7 @@ export default function MovieDetail() {
           </button>
         </div>
         
-        {/* Movie Description */}
+        {/* Overview */}
         {movie.overview && (
           <div>
             <h3 className="text-lg font-semibold mb-2">Overview</h3>
@@ -210,10 +242,10 @@ export default function MovieDetail() {
         {/* Cast */}
         {movie.cast && movie.cast.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold mb-4">Cast</h3>
-            <div className="flex space-x-4 overflow-x-auto pb-4">
-              {movie.cast.map((actor) => (
-                <div key={actor.id} className="flex-shrink-0 text-center">
+            <h3 className="text-lg font-semibold mb-3">Cast</h3>
+            <div className="flex space-x-3 overflow-x-auto pb-2">
+              {movie.cast.slice(0, 8).map((actor: any) => (
+                <div key={actor.id} className="flex-none text-center">
                   {actor.profile_path ? (
                     <img 
                       src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`}
@@ -221,11 +253,11 @@ export default function MovieDetail() {
                       className="w-16 h-16 rounded-full object-cover mb-2"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mb-2">
+                    <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mb-2">
                       <i className="fas fa-user text-gray-400"></i>
                     </div>
                   )}
-                  <p className="text-sm font-medium">{actor.name}</p>
+                  <p className="text-xs font-medium text-white">{actor.name}</p>
                   <p className="text-xs text-gray-400">{actor.character}</p>
                 </div>
               ))}
