@@ -241,7 +241,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const [state, setState] = useState({ 
                 showNotificationForm: false,
                 showTMDBSearch: false,
-                showAddMovieForm: false
+                showAddMovieForm: false,
+                tmdbResults: [],
+                showTMDBResults: false
             });
             
             useEffect(() => {
@@ -607,11 +609,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                             />
                                             <button
                                                 className="btn btn-primary"
-                                                onClick={(e) => {
+                                                onClick={async (e) => {
                                                     const input = e.target.parentElement.querySelector('input');
                                                     const query = input.value;
                                                     if (query) {
-                                                        alert(\`Searching TMDB for: "\${query}"\nResults will show movies you can import with:\n• Full movie details\n• High-quality posters\n• Cast & crew info\n• Ratings & reviews\n• Release dates\`);
+                                                        try {
+                                                            const response = await fetch(\`/api/admin/tmdb/search?query=\${encodeURIComponent(query)}\`);
+                                                            const data = await response.json();
+                                                            if (data.results && data.results.length > 0) {
+                                                                setState(prev => ({ 
+                                                                    ...prev, 
+                                                                    tmdbResults: data.results,
+                                                                    showTMDBResults: true 
+                                                                }));
+                                                            } else {
+                                                                alert('No movies found for: ' + query);
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('TMDB search error:', error);
+                                                            alert('Error searching TMDB. Please try again.');
+                                                        }
                                                     } else {
                                                         alert('Please enter a movie title to search');
                                                     }
@@ -628,6 +645,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                             color: '#64748b'
                                         }}>
                                             💡 <strong>Tip:</strong> Search for popular movies like "Top Gun Maverick", "Avatar 2", "Black Panther" to import with complete metadata
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TMDB Search Results */}
+                                {state.showTMDBResults && state.tmdbResults.length > 0 && (
+                                    <div className="card" style={{ marginBottom: '24px' }}>
+                                        <h3 style={{
+                                            fontSize: '18px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '16px'
+                                        }}>
+                                            Search Results ({state.tmdbResults.length} movies found)
+                                        </h3>
+                                        <div style={{ 
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                                            gap: '16px',
+                                            maxHeight: '500px',
+                                            overflowY: 'auto'
+                                        }}>
+                                            {state.tmdbResults.slice(0, 12).map((movie, index) => (
+                                                <div key={movie.id} style={{
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '8px',
+                                                    padding: '12px',
+                                                    backgroundColor: '#f9fafb'
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '250px',
+                                                        backgroundColor: '#e5e7eb',
+                                                        borderRadius: '6px',
+                                                        marginBottom: '8px',
+                                                        backgroundImage: movie.poster_path ? 
+                                                            \`url(https://image.tmdb.org/t/p/w300\${movie.poster_path})\` : 'none',
+                                                        backgroundSize: 'cover',
+                                                        backgroundPosition: 'center',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: '#6b7280'
+                                                    }}>
+                                                        {!movie.poster_path && '🎬'}
+                                                    </div>
+                                                    <h4 style={{
+                                                        fontWeight: '500',
+                                                        fontSize: '14px',
+                                                        color: '#111827',
+                                                        marginBottom: '4px',
+                                                        lineHeight: '1.3'
+                                                    }}>
+                                                        {movie.title}
+                                                    </h4>
+                                                    <p style={{
+                                                        fontSize: '12px',
+                                                        color: '#6b7280',
+                                                        marginBottom: '8px'
+                                                    }}>
+                                                        {movie.release_date} • ⭐ {movie.vote_average?.toFixed(1)}
+                                                    </p>
+                                                    <button
+                                                        className="btn btn-primary"
+                                                        style={{ 
+                                                            width: '100%',
+                                                            fontSize: '12px',
+                                                            padding: '6px 12px'
+                                                        }}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const response = await fetch('/api/admin/tmdb/import', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ tmdbId: movie.id })
+                                                                });
+                                                                const data = await response.json();
+                                                                if (data.success) {
+                                                                    alert(\`"\${movie.title}" imported successfully!\`);
+                                                                    loadData(); // Refresh movies list
+                                                                    setState(prev => ({ 
+                                                                        ...prev, 
+                                                                        showTMDBResults: false,
+                                                                        tmdbResults: []
+                                                                    }));
+                                                                } else {
+                                                                    alert('Error importing movie: ' + (data.error || 'Unknown error'));
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Import error:', error);
+                                                                alert('Failed to import movie');
+                                                            }
+                                                        }}
+                                                    >
+                                                        Import Movie
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div style={{ 
+                                            marginTop: '16px',
+                                            textAlign: 'center'
+                                        }}>
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => setState(prev => ({ 
+                                                    ...prev, 
+                                                    showTMDBResults: false,
+                                                    tmdbResults: []
+                                                }))}
+                                            >
+                                                Close Results
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -2384,6 +2514,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Create movie error:', error);
       res.status(500).json({ 
         error: 'Failed to create movie',
+        details: error.message
+      });
+    }
+  });
+
+  // TMDB search endpoint
+  app.get('/api/admin/tmdb/search', async (req: AuthenticatedRequest, res) => {
+    try {
+      const query = req.query.query as string;
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.status_message || 'Failed to search TMDB');
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error('TMDB search error:', error);
+      res.status(500).json({ error: 'Failed to search TMDB' });
+    }
+  });
+
+  // TMDB import endpoint
+  app.post('/api/admin/tmdb/import', async (req: AuthenticatedRequest, res) => {
+    try {
+      const { tmdbId } = req.body;
+      if (!tmdbId) {
+        return res.status(400).json({ error: 'TMDB ID is required' });
+      }
+
+      // Check if movie already exists
+      const existingMovie = await storage.getMovieByTmdbId(tmdbId);
+      if (existingMovie) {
+        return res.status(400).json({ error: 'Movie already exists in library' });
+      }
+
+      // Fetch movie details from TMDB
+      const response = await fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}`);
+      const movieData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(movieData.status_message || 'Failed to fetch movie details');
+      }
+
+      // Create movie in database
+      const newMovie = await storage.createMovie({
+        tmdbId: movieData.id,
+        title: movieData.title,
+        overview: movieData.overview || '',
+        releaseDate: movieData.release_date,
+        voteAverage: movieData.vote_average || 0,
+        posterPath: movieData.poster_path,
+        backdropPath: movieData.backdrop_path,
+        genres: JSON.stringify(movieData.genres || []),
+        runtime: movieData.runtime || 120,
+        status: 'published'
+      });
+
+      res.json({
+        success: true,
+        movie: newMovie,
+        message: `Movie "${movieData.title}" imported successfully`
+      });
+    } catch (error) {
+      console.error('TMDB import error:', error);
+      res.status(500).json({ 
+        error: 'Failed to import movie from TMDB',
         details: error.message
       });
     }
