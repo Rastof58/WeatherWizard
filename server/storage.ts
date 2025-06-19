@@ -135,21 +135,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserWatchProgress(userId: number): Promise<(WatchProgress & { movie: Movie })[]> {
-    return await db
+    const results = await db
       .select()
       .from(watchProgress)
       .innerJoin(movies, eq(watchProgress.movieId, movies.id))
       .where(eq(watchProgress.userId, userId))
       .orderBy(desc(watchProgress.lastWatched));
+    
+    return results.map(result => ({
+      ...result.watch_progress,
+      movie: result.movies
+    }));
   }
 
   async getWatchlist(userId: number): Promise<(Watchlist & { movie: Movie })[]> {
-    return await db
+    const results = await db
       .select()
       .from(watchlist)
       .innerJoin(movies, eq(watchlist.movieId, movies.id))
       .where(eq(watchlist.userId, userId))
       .orderBy(desc(watchlist.addedAt));
+    
+    return results.map(result => ({
+      ...result.watchlist,
+      movie: result.movies
+    }));
   }
 
   async addToWatchlist(userId: number, movieId: number): Promise<Watchlist> {

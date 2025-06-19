@@ -1,7 +1,14 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertWatchProgressSchema } from "@shared/schema";
+
+interface AuthenticatedRequest extends Request {
+  session: {
+    userId?: number;
+    destroy: (callback: (err?: any) => void) => void;
+  } & any;
+}
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.VITE_TMDB_API_KEY || "";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -143,17 +150,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           creditsResponse.json()
         ]);
 
-        movie = await storage.createMovie({
-          ...movie,
-          runtime: details.runtime || details.episode_run_time?.[0],
-          genres: details.genres,
+        // Update the existing movie with detailed info
+        const updatedMovieData = {
+          tmdbId: movie.tmdbId,
+          title: movie.title,
+          overview: movie.overview,
+          posterPath: movie.posterPath,
+          backdropPath: movie.backdropPath,
+          releaseDate: movie.releaseDate,
+          voteAverage: movie.voteAverage,
+          voteCount: movie.voteCount,
+          runtime: details.runtime || details.episode_run_time?.[0] || null,
+          genres: details.genres || [],
           cast: credits.cast?.slice(0, 10).map((actor: any) => ({
             id: actor.id,
             name: actor.name,
             character: actor.character,
             profile_path: actor.profile_path
           })) || [],
-        });
+          isMovie: movie.isMovie
+        };
+        
+        // For now, return the movie with updated data
+        movie = { ...movie, ...updatedMovieData };
       }
       
       res.json({ movie });
