@@ -1,13 +1,15 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertWatchProgressSchema, users, movies, watchProgress, watchlist } from "@shared/schema";
+import { insertUserSchema, insertWatchProgressSchema, insertAdminSchema, users, movies, watchProgress, watchlist, admins } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 interface AuthenticatedRequest extends Request {
   session: {
     userId?: number;
+    adminId?: number;
     destroy: (callback: (err?: any) => void) => void;
   } & any;
 }
@@ -50,6 +52,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {
       res.json({ success: true });
+    });
+  });
+
+  // Admin authentication routes
+  app.post("/api/admin/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password required" });
+      }
+
+      const admin = await db.select().from(admins).where(eq(admins.username, username)).limit(1);
+      
+      if (!admin.length) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, admin[0].password);
+      
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      req.session.adminId = admin[0].id;
+      res.json({ 
+        success: true, 
+        admin: { 
+          id: admin[0].id, 
+          username: admin[0].username, 
+          role: admin[0].role 
+        } 
+      });
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/admin/auth/logout", (req, res) => {
+    req.session.destroy(() => {
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/admin/auth/me", async (req: AuthenticatedRequest, res) => {
+    if (!req.session.adminId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const admin = await db.select().from(admins).where(eq(admins.id, req.session.adminId)).limit(1);
+    if (!admin.length) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+    
+    res.json({ 
+      admin: { 
+        id: admin[0].id, 
+        username: admin[0].username, 
+        role: admin[0].role 
+      } 
     });
   });
 
@@ -452,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalMovies = await db.select({ count: sql<number>`count(*)` }).from(movies);
       const activeUsers = await db.select({ count: sql<number>`count(distinct ${watchProgress.userId})` })
         .from(watchProgress)
-        .where(sql`${watchProgress.updatedAt} > NOW() - INTERVAL '24 hours'`);
+        .where(sql`${watchProgress.lastWatched} > NOW() - INTERVAL '24 hours'`);
       
       const totalWatchHours = await db.select({ 
         hours: sql<number>`sum(${watchProgress.currentTime}) / 3600` 
@@ -560,13 +623,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recentActivity = await db.select({
         movieTitle: movies.title,
         userCount: sql<number>`count(distinct ${watchProgress.userId})`,
-        timestamp: sql<string>`max(${watchProgress.updatedAt})`
+        timestamp: sql<string>`max(${watchProgress.lastWatched})`
       })
         .from(watchProgress)
         .innerJoin(movies, eq(movies.id, watchProgress.movieId))
-        .where(sql`${watchProgress.updatedAt} > NOW() - INTERVAL '7 days'`)
+        .where(sql`${watchProgress.lastWatched} > NOW() - INTERVAL '7 days'`)
         .groupBy(movies.id, movies.title)
-        .orderBy(desc(sql`max(${watchProgress.updatedAt})`))
+        .orderBy(desc(sql`max(${watchProgress.lastWatched})`))
         .limit(10);
 
       res.json({

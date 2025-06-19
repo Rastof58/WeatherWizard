@@ -47,6 +47,15 @@ export const watchlist = pgTable("watchlist", {
   addedAt: timestamp("added_at").defaultNow(),
 });
 
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email"),
+  role: text("role").default("admin"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   watchProgress: many(watchProgress),
   watchlist: many(watchlist),
@@ -87,6 +96,11 @@ export const insertWatchlistSchema = createInsertSchema(watchlist).omit({
   addedAt: true,
 });
 
+export const insertAdminSchema = createInsertSchema(admins).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertMovie = z.infer<typeof insertMovieSchema>;
@@ -95,3 +109,5 @@ export type InsertWatchProgress = z.infer<typeof insertWatchProgressSchema>;
 export type WatchProgress = typeof watchProgress.$inferSelect;
 export type InsertWatchlist = z.infer<typeof insertWatchlistSchema>;
 export type Watchlist = typeof watchlist.$inferSelect;
+export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+export type Admin = typeof admins.$inferSelect;
