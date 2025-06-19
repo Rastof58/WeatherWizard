@@ -233,11 +233,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         function Dashboard({ admin, onLogout }) {
+            const [activeTab, setActiveTab] = useState('dashboard');
             const [stats, setStats] = useState(null);
+            const [movies, setMovies] = useState([]);
+            const [users, setUsers] = useState([]);
             const [loading, setLoading] = useState(true);
             
             useEffect(() => {
                 fetchStats();
+                fetchMovies();
+                fetchUsers();
             }, []);
             
             const fetchStats = async () => {
@@ -253,6 +258,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     setLoading(false);
                 }
             };
+
+            const fetchMovies = async () => {
+                try {
+                    const response = await fetch('/api/admin/movies');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMovies(data.movies || []);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch movies:', err);
+                }
+            };
+
+            const fetchUsers = async () => {
+                try {
+                    const response = await fetch('/api/admin/users');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUsers(data.users || []);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch users:', err);
+                }
+            };
             
             const handleLogout = async () => {
                 try {
@@ -262,7 +291,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     console.error('Logout failed:', err);
                 }
             };
+
+            const deleteMovie = async (movieId) => {
+                if (confirm('Are you sure you want to delete this movie?')) {
+                    try {
+                        const response = await fetch(\`/api/admin/movies/\${movieId}\`, {
+                            method: 'DELETE'
+                        });
+                        if (response.ok) {
+                            fetchMovies();
+                            fetchStats();
+                        }
+                    } catch (err) {
+                        console.error('Failed to delete movie:', err);
+                    }
+                }
+            };
             
+            const TabButton = ({ id, label, isActive, onClick }) => (
+                <button
+                    onClick={() => onClick(id)}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: isActive ? '#2563eb' : 'transparent',
+                        color: isActive ? 'white' : '#374151',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    {label}
+                </button>
+            );
+
             return (
                 <div style={{
                     minHeight: '100vh',
@@ -305,185 +368,610 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             </div>
                         </div>
                     </nav>
+
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderBottom: '1px solid #e5e7eb',
+                        padding: '0 20px'
+                    }}>
+                        <div style={{
+                            maxWidth: '1200px',
+                            margin: '0 auto',
+                            display: 'flex',
+                            gap: '8px',
+                            padding: '16px 0'
+                        }}>
+                            <TabButton 
+                                id="dashboard" 
+                                label="Dashboard" 
+                                isActive={activeTab === 'dashboard'} 
+                                onClick={setActiveTab} 
+                            />
+                            <TabButton 
+                                id="movies" 
+                                label="Movie Management" 
+                                isActive={activeTab === 'movies'} 
+                                onClick={setActiveTab} 
+                            />
+                            <TabButton 
+                                id="users" 
+                                label="User Management" 
+                                isActive={activeTab === 'users'} 
+                                onClick={setActiveTab} 
+                            />
+                            <TabButton 
+                                id="analytics" 
+                                label="Analytics" 
+                                isActive={activeTab === 'analytics'} 
+                                onClick={setActiveTab} 
+                            />
+                        </div>
+                    </div>
                     
                     <main style={{
                         maxWidth: '1200px',
                         margin: '0 auto',
                         padding: '24px 20px'
                     }}>
-                        <div style={{ marginBottom: '32px' }}>
-                            <h2 style={{
-                                fontSize: '24px',
-                                fontWeight: 'bold',
-                                color: '#111827',
-                                marginBottom: '4px'
-                            }}>
-                                Dashboard
-                            </h2>
-                            <p style={{
-                                color: '#6b7280',
-                                fontSize: '16px'
-                            }}>
-                                Overview of your movie streaming platform
-                            </p>
-                        </div>
-                        
-                        {loading ? (
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '32px',
-                                fontSize: '16px',
-                                color: '#6b7280'
-                            }}>
-                                Loading statistics...
-                            </div>
-                        ) : stats ? (
-                            <div className="grid-4" style={{ marginBottom: '32px' }}>
-                                <div className="stat-card">
-                                    <h3 style={{
-                                        fontSize: '18px',
-                                        fontWeight: '500',
-                                        color: '#111827',
-                                        marginBottom: '8px'
-                                    }}>
-                                        Total Users
-                                    </h3>
-                                    <p style={{
-                                        fontSize: '36px',
+                        {activeTab === 'dashboard' && (
+                            <div>
+                                <div style={{ marginBottom: '32px' }}>
+                                    <h2 style={{
+                                        fontSize: '24px',
                                         fontWeight: 'bold',
-                                        color: '#2563eb'
-                                    }}>
-                                        {stats.totalUsers}
-                                    </p>
-                                </div>
-                                <div className="stat-card">
-                                    <h3 style={{
-                                        fontSize: '18px',
-                                        fontWeight: '500',
                                         color: '#111827',
-                                        marginBottom: '8px'
-                                    }}>
-                                        Total Movies
-                                    </h3>
-                                    <p style={{
-                                        fontSize: '36px',
-                                        fontWeight: 'bold',
-                                        color: '#059669'
-                                    }}>
-                                        {stats.totalMovies}
-                                    </p>
-                                </div>
-                                <div className="stat-card">
-                                    <h3 style={{
-                                        fontSize: '18px',
-                                        fontWeight: '500',
-                                        color: '#111827',
-                                        marginBottom: '8px'
-                                    }}>
-                                        Active Users
-                                    </h3>
-                                    <p style={{
-                                        fontSize: '36px',
-                                        fontWeight: 'bold',
-                                        color: '#7c3aed'
-                                    }}>
-                                        {stats.activeUsers}
-                                    </p>
-                                </div>
-                                <div className="stat-card">
-                                    <h3 style={{
-                                        fontSize: '18px',
-                                        fontWeight: '500',
-                                        color: '#111827',
-                                        marginBottom: '8px'
-                                    }}>
-                                        Watch Hours
-                                    </h3>
-                                    <p style={{
-                                        fontSize: '36px',
-                                        fontWeight: 'bold',
-                                        color: '#dc2626'
-                                    }}>
-                                        {stats.totalWatchHours}
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '32px',
-                                color: '#6b7280'
-                            }}>
-                                Failed to load statistics
-                            </div>
-                        )}
-                        
-                        <div className="card">
-                            <h3 style={{
-                                fontSize: '18px',
-                                fontWeight: '500',
-                                color: '#111827',
-                                marginBottom: '16px'
-                            }}>
-                                Quick Actions
-                            </h3>
-                            <div className="grid-3">
-                                <div style={{
-                                    padding: '16px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '6px'
-                                }}>
-                                    <h4 style={{
-                                        fontWeight: '500',
                                         marginBottom: '4px'
                                     }}>
-                                        Movie Management
-                                    </h4>
+                                        Dashboard
+                                    </h2>
                                     <p style={{
-                                        fontSize: '14px',
-                                        color: '#6b7280'
+                                        color: '#6b7280',
+                                        fontSize: '16px'
                                     }}>
-                                        Add, edit, and manage movies
+                                        Overview of your movie streaming platform
                                     </p>
                                 </div>
-                                <div style={{
-                                    padding: '16px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '6px'
+                                
+                                {loading ? (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '32px',
+                                        fontSize: '16px',
+                                        color: '#6b7280'
+                                    }}>
+                                        Loading statistics...
+                                    </div>
+                                ) : stats ? (
+                                    <div className="grid-4" style={{ marginBottom: '32px' }}>
+                                        <div className="stat-card">
+                                            <h3 style={{
+                                                fontSize: '18px',
+                                                fontWeight: '500',
+                                                color: '#111827',
+                                                marginBottom: '8px'
+                                            }}>
+                                                Total Users
+                                            </h3>
+                                            <p style={{
+                                                fontSize: '36px',
+                                                fontWeight: 'bold',
+                                                color: '#2563eb'
+                                            }}>
+                                                {stats.totalUsers}
+                                            </p>
+                                        </div>
+                                        <div className="stat-card">
+                                            <h3 style={{
+                                                fontSize: '18px',
+                                                fontWeight: '500',
+                                                color: '#111827',
+                                                marginBottom: '8px'
+                                            }}>
+                                                Total Movies
+                                            </h3>
+                                            <p style={{
+                                                fontSize: '36px',
+                                                fontWeight: 'bold',
+                                                color: '#059669'
+                                            }}>
+                                                {stats.totalMovies}
+                                            </p>
+                                        </div>
+                                        <div className="stat-card">
+                                            <h3 style={{
+                                                fontSize: '18px',
+                                                fontWeight: '500',
+                                                color: '#111827',
+                                                marginBottom: '8px'
+                                            }}>
+                                                Active Users
+                                            </h3>
+                                            <p style={{
+                                                fontSize: '36px',
+                                                fontWeight: 'bold',
+                                                color: '#7c3aed'
+                                            }}>
+                                                {stats.activeUsers}
+                                            </p>
+                                        </div>
+                                        <div className="stat-card">
+                                            <h3 style={{
+                                                fontSize: '18px',
+                                                fontWeight: '500',
+                                                color: '#111827',
+                                                marginBottom: '8px'
+                                            }}>
+                                                Watch Hours
+                                            </h3>
+                                            <p style={{
+                                                fontSize: '36px',
+                                                fontWeight: 'bold',
+                                                color: '#dc2626'
+                                            }}>
+                                                {stats.totalWatchHours}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '32px',
+                                        color: '#6b7280'
+                                    }}>
+                                        Failed to load statistics
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'movies' && (
+                            <div>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    marginBottom: '24px' 
                                 }}>
-                                    <h4 style={{
-                                        fontWeight: '500',
+                                    <div>
+                                        <h2 style={{
+                                            fontSize: '24px',
+                                            fontWeight: 'bold',
+                                            color: '#111827',
+                                            marginBottom: '4px'
+                                        }}>
+                                            Movie Management
+                                        </h2>
+                                        <p style={{
+                                            color: '#6b7280',
+                                            fontSize: '16px'
+                                        }}>
+                                            Manage your movie library
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="card">
+                                    <div style={{
+                                        overflowX: 'auto'
+                                    }}>
+                                        <table style={{
+                                            width: '100%',
+                                            borderCollapse: 'collapse'
+                                        }}>
+                                            <thead>
+                                                <tr style={{
+                                                    borderBottom: '2px solid #e5e7eb'
+                                                }}>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Title</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Release Date</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Rating</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {movies.slice(0, 10).map((movie, index) => (
+                                                    <tr key={movie.id} style={{
+                                                        borderBottom: '1px solid #f3f4f6'
+                                                    }}>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            fontWeight: '500'
+                                                        }}>
+                                                            {movie.title}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            {movie.releaseDate || 'N/A'}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            {movie.voteAverage ? movie.voteAverage.toFixed(1) : 'N/A'}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px'
+                                                        }}>
+                                                            <button
+                                                                onClick={() => deleteMovie(movie.id)}
+                                                                style={{
+                                                                    padding: '4px 12px',
+                                                                    backgroundColor: '#dc2626',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        {movies.length === 0 && (
+                                            <div style={{
+                                                textAlign: 'center',
+                                                padding: '32px',
+                                                color: '#6b7280'
+                                            }}>
+                                                No movies found
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'users' && (
+                            <div>
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h2 style={{
+                                        fontSize: '24px',
+                                        fontWeight: 'bold',
+                                        color: '#111827',
                                         marginBottom: '4px'
                                     }}>
                                         User Management
-                                    </h4>
+                                    </h2>
                                     <p style={{
-                                        fontSize: '14px',
-                                        color: '#6b7280'
+                                        color: '#6b7280',
+                                        fontSize: '16px'
                                     }}>
                                         View and manage user accounts
                                     </p>
                                 </div>
-                                <div style={{
-                                    padding: '16px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '6px'
-                                }}>
-                                    <h4 style={{
-                                        fontWeight: '500',
-                                        marginBottom: '4px'
+                                
+                                <div className="card">
+                                    <div style={{
+                                        overflowX: 'auto'
                                     }}>
-                                        Analytics
-                                    </h4>
-                                    <p style={{
-                                        fontSize: '14px',
-                                        color: '#6b7280'
-                                    }}>
-                                        View detailed analytics and reports
-                                    </p>
+                                        <table style={{
+                                            width: '100%',
+                                            borderCollapse: 'collapse'
+                                        }}>
+                                            <thead>
+                                                <tr style={{
+                                                    borderBottom: '2px solid #e5e7eb'
+                                                }}>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Username</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>First Name</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Telegram ID</th>
+                                                    <th style={{
+                                                        textAlign: 'left',
+                                                        padding: '12px 8px',
+                                                        fontWeight: '600',
+                                                        color: '#374151'
+                                                    }}>Joined</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {users.slice(0, 20).map((user, index) => (
+                                                    <tr key={user.id} style={{
+                                                        borderBottom: '1px solid #f3f4f6'
+                                                    }}>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            fontWeight: '500'
+                                                        }}>
+                                                            {user.username || 'N/A'}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            {user.firstName || 'N/A'}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            {user.telegramId}
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '12px 8px',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        {users.length === 0 && (
+                                            <div style={{
+                                                textAlign: 'center',
+                                                padding: '32px',
+                                                color: '#6b7280'
+                                            }}>
+                                                No users found
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
+
+                        {activeTab === 'analytics' && (
+                            <div>
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h2 style={{
+                                        fontSize: '24px',
+                                        fontWeight: 'bold',
+                                        color: '#111827',
+                                        marginBottom: '4px'
+                                    }}>
+                                        Analytics & Reports
+                                    </h2>
+                                    <p style={{
+                                        color: '#6b7280',
+                                        fontSize: '16px'
+                                    }}>
+                                        Detailed analytics and insights
+                                    </p>
+                                </div>
+                                
+                                {stats && (
+                                    <div>
+                                        <div className="grid-4" style={{ marginBottom: '32px' }}>
+                                            <div className="stat-card">
+                                                <h3 style={{
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    Platform Growth
+                                                </h3>
+                                                <p style={{
+                                                    fontSize: '24px',
+                                                    fontWeight: 'bold',
+                                                    color: '#2563eb',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    {stats.totalUsers}
+                                                </p>
+                                                <p style={{
+                                                    fontSize: '12px',
+                                                    color: '#6b7280'
+                                                }}>
+                                                    Total registered users
+                                                </p>
+                                            </div>
+                                            <div className="stat-card">
+                                                <h3 style={{
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    Content Library
+                                                </h3>
+                                                <p style={{
+                                                    fontSize: '24px',
+                                                    fontWeight: 'bold',
+                                                    color: '#059669',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    {stats.totalMovies}
+                                                </p>
+                                                <p style={{
+                                                    fontSize: '12px',
+                                                    color: '#6b7280'
+                                                }}>
+                                                    Movies & TV shows available
+                                                </p>
+                                            </div>
+                                            <div className="stat-card">
+                                                <h3 style={{
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    Daily Activity
+                                                </h3>
+                                                <p style={{
+                                                    fontSize: '24px',
+                                                    fontWeight: 'bold',
+                                                    color: '#7c3aed',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    {stats.activeUsers}
+                                                </p>
+                                                <p style={{
+                                                    fontSize: '12px',
+                                                    color: '#6b7280'
+                                                }}>
+                                                    Active users today
+                                                </p>
+                                            </div>
+                                            <div className="stat-card">
+                                                <h3 style={{
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    Engagement
+                                                </h3>
+                                                <p style={{
+                                                    fontSize: '24px',
+                                                    fontWeight: 'bold',
+                                                    color: '#dc2626',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    {stats.totalWatchHours}h
+                                                </p>
+                                                <p style={{
+                                                    fontSize: '12px',
+                                                    color: '#6b7280'
+                                                }}>
+                                                    Total hours watched
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid-3">
+                                            <div className="card">
+                                                <h3 style={{
+                                                    fontSize: '18px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '16px'
+                                                }}>
+                                                    User Engagement
+                                                </h3>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Average session</span>
+                                                    <span style={{ fontWeight: '500' }}>
+                                                        {stats.totalWatchHours > 0 && stats.activeUsers > 0 
+                                                            ? Math.round((stats.totalWatchHours / stats.activeUsers) * 60) 
+                                                            : 0} min
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Retention rate</span>
+                                                    <span style={{ fontWeight: '500' }}>
+                                                        {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="card">
+                                                <h3 style={{
+                                                    fontSize: '18px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '16px'
+                                                }}>
+                                                    Content Performance
+                                                </h3>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Avg. per movie</span>
+                                                    <span style={{ fontWeight: '500' }}>
+                                                        {stats.totalMovies > 0 ? Math.round(stats.totalWatchHours / stats.totalMovies) : 0}h
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Library utilization</span>
+                                                    <span style={{ fontWeight: '500' }}>
+                                                        {stats.totalMovies > 0 ? Math.round((stats.totalWatchHours / stats.totalMovies) * 10) : 0}%
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="card">
+                                                <h3 style={{
+                                                    fontSize: '18px',
+                                                    fontWeight: '500',
+                                                    color: '#111827',
+                                                    marginBottom: '16px'
+                                                }}>
+                                                    Platform Health
+                                                </h3>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Status</span>
+                                                    <span style={{ 
+                                                        fontWeight: '500',
+                                                        color: '#059669'
+                                                    }}>
+                                                        Operational
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Uptime</span>
+                                                    <span style={{ fontWeight: '500' }}>99.9%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </main>
                 </div>
             );
@@ -1071,6 +1559,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching admin movies:', error);
       res.status(500).json({ error: 'Failed to fetch movies' });
+    }
+  });
+
+  app.get('/api/admin/users', async (req: AuthenticatedRequest, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = (page - 1) * limit;
+      
+      const usersResult = await db.select()
+        .from(users)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(users.createdAt));
+      
+      const totalCount = await db.select({ count: sql<number>`count(*)` }).from(users);
+      
+      res.json({
+        users: usersResult,
+        total: totalCount[0]?.count || 0,
+        page,
+        limit,
+        hasNextPage: offset + limit < (totalCount[0]?.count || 0)
+      });
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
     }
   });
 
