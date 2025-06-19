@@ -61,11 +61,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error(data.status_message || "Failed to fetch trending movies");
       }
       
-      // Store movies in database
+      // Store movies in database with genre mapping
       const movies = [];
+      
+      // Define genre mappings
+      const movieGenres = {
+        28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+        27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Science Fiction',
+        10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+      };
+      
+      const tvGenres = {
+        10759: 'Action & Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 10762: 'Kids',
+        9648: 'Mystery', 10763: 'News', 10764: 'Reality', 10765: 'Sci-Fi & Fantasy',
+        10766: 'Soap', 10767: 'Talk', 10768: 'War & Politics', 37: 'Western'
+      };
+      
       for (const item of data.results.slice(0, 20)) {
         let movie = await storage.getMovieByTmdbId(item.id);
         if (!movie) {
+          const isMovie = !!item.title;
+          const genreMap = isMovie ? movieGenres : tvGenres;
+          const genres = item.genre_ids ? item.genre_ids.map((id: number) => ({
+            id,
+            name: genreMap[id as keyof typeof genreMap] || 'Unknown'
+          })).filter((g: any) => g.name !== 'Unknown') : [];
+          
           movie = await storage.createMovie({
             tmdbId: item.id,
             title: item.title || item.name,
@@ -75,9 +98,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             releaseDate: item.release_date || item.first_air_date,
             voteAverage: item.vote_average,
             voteCount: item.vote_count,
-            isMovie: !!item.title,
+            isMovie,
             runtime: null,
-            genres: [],
+            genres,
             cast: [],
           });
         }
@@ -101,9 +124,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const movies = [];
+      
+      // Define genre mappings
+      const movieGenres = {
+        28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+        27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Science Fiction',
+        10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+      };
+      
       for (const item of data.results.slice(0, 20)) {
         let movie = await storage.getMovieByTmdbId(item.id);
         if (!movie) {
+          const genres = item.genre_ids ? item.genre_ids.map((id: number) => ({
+            id,
+            name: movieGenres[id as keyof typeof movieGenres] || 'Unknown'
+          })).filter((g: any) => g.name !== 'Unknown') : [];
+          
           movie = await storage.createMovie({
             tmdbId: item.id,
             title: item.title,
@@ -115,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             voteCount: item.vote_count,
             isMovie: true,
             runtime: null,
-            genres: [],
+            genres,
             cast: [],
           });
         }
@@ -145,11 +182,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const movies = [];
+      
+      // Define genre mappings
+      const movieGenres = {
+        28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+        27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Science Fiction',
+        10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western'
+      };
+      
+      const tvGenres = {
+        10759: 'Action & Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+        99: 'Documentary', 18: 'Drama', 10751: 'Family', 10762: 'Kids',
+        9648: 'Mystery', 10763: 'News', 10764: 'Reality', 10765: 'Sci-Fi & Fantasy',
+        10766: 'Soap', 10767: 'Talk', 10768: 'War & Politics', 37: 'Western'
+      };
+      
       for (const item of data.results.slice(0, 10)) {
         if (item.media_type === 'person') continue;
         
         let movie = await storage.getMovieByTmdbId(item.id);
         if (!movie) {
+          const isMovie = item.media_type === 'movie';
+          const genreMap = isMovie ? movieGenres : tvGenres;
+          const genres = item.genre_ids ? item.genre_ids.map((id: number) => ({
+            id,
+            name: genreMap[id as keyof typeof genreMap] || 'Unknown'
+          })).filter((g: any) => g.name !== 'Unknown') : [];
+          
           movie = await storage.createMovie({
             tmdbId: item.id,
             title: item.title || item.name,
@@ -159,9 +219,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             releaseDate: item.release_date || item.first_air_date,
             voteAverage: item.vote_average,
             voteCount: item.vote_count,
-            isMovie: item.media_type === 'movie',
+            isMovie,
             runtime: null,
-            genres: [],
+            genres,
             cast: [],
           });
         }
