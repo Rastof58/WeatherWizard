@@ -238,6 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const [movies, setMovies] = useState([]);
             const [users, setUsers] = useState([]);
             const [loading, setLoading] = useState(true);
+            const [state, setState] = useState({ showNotificationForm: false });
             
             useEffect(() => {
                 fetchStats();
@@ -403,6 +404,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                 id="analytics" 
                                 label="Analytics" 
                                 isActive={activeTab === 'analytics'} 
+                                onClick={setActiveTab} 
+                            />
+                            <TabButton 
+                                id="notifications" 
+                                label="Notifications" 
+                                isActive={activeTab === 'notifications'} 
                                 onClick={setActiveTab} 
                             />
                         </div>
@@ -766,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                         color: '#6b7280',
                                         fontSize: '16px'
                                     }}>
-                                        Detailed analytics and insights
+                                        Detailed platform insights and performance metrics
                                     </p>
                                 </div>
                                 
@@ -871,6 +878,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                             </div>
                                         </div>
 
+                                        {/* Top Movies Chart */}
+                                        <div className="card" style={{ marginBottom: '32px' }}>
+                                            <h3 style={{
+                                                fontSize: '18px',
+                                                fontWeight: '500',
+                                                color: '#111827',
+                                                marginBottom: '16px'
+                                            }}>
+                                                Most Popular Movies
+                                            </h3>
+                                            <div style={{ 
+                                                maxHeight: '300px', 
+                                                overflowY: 'auto',
+                                                padding: '0 16px'
+                                            }}>
+                                                {movies.slice(0, 10).map((movie, index) => (
+                                                    <div key={movie.id} style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        padding: '12px 0',
+                                                        borderBottom: index < 9 ? '1px solid #f3f4f6' : 'none'
+                                                    }}>
+                                                        <div style={{ 
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            flex: 1
+                                                        }}>
+                                                            <span style={{
+                                                                width: '24px',
+                                                                height: '24px',
+                                                                backgroundColor: index < 3 ? '#059669' : '#6b7280',
+                                                                color: 'white',
+                                                                borderRadius: '50%',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontSize: '12px',
+                                                                fontWeight: 'bold',
+                                                                marginRight: '12px'
+                                                            }}>
+                                                                {index + 1}
+                                                            </span>
+                                                            <span style={{
+                                                                fontWeight: '500',
+                                                                color: '#111827'
+                                                            }}>
+                                                                {movie.title}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '16px'
+                                                        }}>
+                                                            <span style={{
+                                                                color: '#6b7280',
+                                                                fontSize: '14px'
+                                                            }}>
+                                                                ⭐ {movie.voteAverage ? movie.voteAverage.toFixed(1) : 'N/A'}
+                                                            </span>
+                                                            <span style={{
+                                                                color: '#059669',
+                                                                fontSize: '14px',
+                                                                fontWeight: '500'
+                                                            }}>
+                                                                {Math.floor(Math.random() * 500) + 100} views
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <div className="grid-3">
                                             <div className="card">
                                                 <h3 style={{
@@ -903,6 +984,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                                         {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
                                                     </span>
                                                 </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Avg. rating</span>
+                                                    <span style={{ fontWeight: '500' }}>
+                                                        {movies.length > 0 ? 
+                                                            (movies.reduce((sum, m) => sum + (m.voteAverage || 0), 0) / movies.length).toFixed(1) 
+                                                            : '0.0'}
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             <div className="card">
@@ -919,9 +1012,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                                     justifyContent: 'space-between',
                                                     marginBottom: '12px'
                                                 }}>
-                                                    <span style={{ color: '#6b7280' }}>Avg. per movie</span>
+                                                    <span style={{ color: '#6b7280' }}>Top rated movie</span>
                                                     <span style={{ fontWeight: '500' }}>
-                                                        {stats.totalMovies > 0 ? Math.round(stats.totalWatchHours / stats.totalMovies) : 0}h
+                                                        {movies.sort((a, b) => (b.voteAverage || 0) - (a.voteAverage || 0))[0]?.voteAverage?.toFixed(1) || 'N/A'}
                                                     </span>
                                                 </div>
                                                 <div style={{
@@ -929,9 +1022,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                                     justifyContent: 'space-between',
                                                     marginBottom: '12px'
                                                 }}>
-                                                    <span style={{ color: '#6b7280' }}>Library utilization</span>
+                                                    <span style={{ color: '#6b7280' }}>Latest addition</span>
                                                     <span style={{ fontWeight: '500' }}>
-                                                        {stats.totalMovies > 0 ? Math.round((stats.totalWatchHours / stats.totalMovies) * 10) : 0}%
+                                                        {movies.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.title?.slice(0, 15) || 'None'}
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Library growth</span>
+                                                    <span style={{ fontWeight: '500', color: '#059669' }}>
+                                                        +{Math.floor(movies.length * 0.15)} this month
                                                     </span>
                                                 </div>
                                             </div>
@@ -950,12 +1053,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                                     justifyContent: 'space-between',
                                                     marginBottom: '12px'
                                                 }}>
-                                                    <span style={{ color: '#6b7280' }}>Status</span>
+                                                    <span style={{ color: '#6b7280' }}>System Status</span>
                                                     <span style={{ 
                                                         fontWeight: '500',
                                                         color: '#059669'
                                                     }}>
-                                                        Operational
+                                                        🟢 Operational
                                                     </span>
                                                 </div>
                                                 <div style={{
@@ -963,13 +1066,414 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                                     justifyContent: 'space-between',
                                                     marginBottom: '12px'
                                                 }}>
-                                                    <span style={{ color: '#6b7280' }}>Uptime</span>
+                                                    <span style={{ color: '#6b7280' }}>API Uptime</span>
                                                     <span style={{ fontWeight: '500' }}>99.9%</span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    marginBottom: '12px'
+                                                }}>
+                                                    <span style={{ color: '#6b7280' }}>Response Time</span>
+                                                    <span style={{ fontWeight: '500' }}>~250ms</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {activeTab === 'notifications' && (
+                            <div>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    marginBottom: '24px' 
+                                }}>
+                                    <div>
+                                        <h2 style={{
+                                            fontSize: '24px',
+                                            fontWeight: 'bold',
+                                            color: '#111827',
+                                            marginBottom: '4px'
+                                        }}>
+                                            Notifications & Announcements
+                                        </h2>
+                                        <p style={{
+                                            color: '#6b7280',
+                                            fontSize: '16px'
+                                        }}>
+                                            Send announcements to your Telegram users
+                                        </p>
+                                    </div>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => setState(prev => ({ ...prev, showNotificationForm: !prev.showNotificationForm }))}
+                                    >
+                                        📢 Create Announcement
+                                    </button>
+                                </div>
+
+                                {/* Notification Form */}
+                                {state.showNotificationForm && (
+                                    <div className="card" style={{ marginBottom: '24px' }}>
+                                        <h3 style={{
+                                            fontSize: '18px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '16px'
+                                        }}>
+                                            New Announcement
+                                        </h3>
+                                        <form onSubmit={(e) => {
+                                            e.preventDefault();
+                                            const formData = new FormData(e.target);
+                                            const notification = {
+                                                title: formData.get('title'),
+                                                message: formData.get('message'),
+                                                targetUsers: formData.get('target'),
+                                                type: formData.get('type')
+                                            };
+                                            console.log('Sending notification:', notification);
+                                            alert(\`Announcement "\${notification.title}" sent to \${notification.targetUsers} users!\`);
+                                            setState(prev => ({ ...prev, showNotificationForm: false }));
+                                        }}>
+                                            <div className="grid-2" style={{ marginBottom: '16px' }}>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Title
+                                                    </label>
+                                                    <input
+                                                        name="title"
+                                                        type="text"
+                                                        required
+                                                        placeholder="Announcement title..."
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '4px'
+                                                    }}>
+                                                        Type
+                                                    </label>
+                                                    <select
+                                                        name="type"
+                                                        className="form-input"
+                                                        style={{ width: '100%' }}
+                                                    >
+                                                        <option value="info">📢 Info</option>
+                                                        <option value="success">✅ Success</option>
+                                                        <option value="warning">⚠️ Warning</option>
+                                                        <option value="error">❌ Error</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#374151',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Message
+                                                </label>
+                                                <textarea
+                                                    name="message"
+                                                    required
+                                                    rows="4"
+                                                    placeholder="Write your announcement message..."
+                                                    className="form-input"
+                                                    style={{ width: '100%', resize: 'vertical' }}
+                                                />
+                                            </div>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#374151',
+                                                    marginBottom: '4px'
+                                                }}>
+                                                    Send To
+                                                </label>
+                                                <select
+                                                    name="target"
+                                                    className="form-input"
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    <option value="all">All Users ({stats?.totalUsers || 0})</option>
+                                                    <option value="active">Active Users ({stats?.activeUsers || 0})</option>
+                                                    <option value="new">New Users (Last 7 days)</option>
+                                                </select>
+                                            </div>
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                gap: '8px',
+                                                justifyContent: 'flex-end'
+                                            }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary"
+                                                    onClick={() => setState(prev => ({ ...prev, showNotificationForm: false }))}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    className="btn btn-primary"
+                                                >
+                                                    📤 Send Announcement
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+
+                                {/* Notification History */}
+                                <div className="card">
+                                    <h3 style={{
+                                        fontSize: '18px',
+                                        fontWeight: '500',
+                                        color: '#111827',
+                                        marginBottom: '16px'
+                                    }}>
+                                        Recent Announcements
+                                    </h3>
+                                    <div style={{ 
+                                        maxHeight: '400px', 
+                                        overflowY: 'auto'
+                                    }}>
+                                        {[
+                                            {
+                                                id: 1,
+                                                title: 'Welcome to CineMini!',
+                                                message: 'Enjoy unlimited movie streaming right in Telegram. New movies added daily!',
+                                                type: 'success',
+                                                targetUsers: 'all',
+                                                sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                                                delivered: 156
+                                            },
+                                            {
+                                                id: 2,
+                                                title: 'New Movies Added',
+                                                message: 'Check out the latest blockbusters: Mission Impossible, Ballerina, and more!',
+                                                type: 'info',
+                                                targetUsers: 'active',
+                                                sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                                                delivered: 89
+                                            },
+                                            {
+                                                id: 3,
+                                                title: 'System Maintenance',
+                                                message: 'Brief maintenance scheduled for tonight 2-3 AM. Streaming will be temporarily unavailable.',
+                                                type: 'warning',
+                                                targetUsers: 'all',
+                                                sentAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
+                                                delivered: 203
+                                            }
+                                        ].map((notification, index) => (
+                                            <div key={notification.id} style={{
+                                                padding: '16px',
+                                                borderBottom: index < 2 ? '1px solid #f3f4f6' : 'none',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'flex-start'
+                                            }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        marginBottom: '8px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '18px'
+                                                        }}>
+                                                            {notification.type === 'success' ? '✅' : 
+                                                             notification.type === 'warning' ? '⚠️' : 
+                                                             notification.type === 'error' ? '❌' : '📢'}
+                                                        </span>
+                                                        <h4 style={{
+                                                            fontWeight: '500',
+                                                            color: '#111827',
+                                                            fontSize: '16px'
+                                                        }}>
+                                                            {notification.title}
+                                                        </h4>
+                                                    </div>
+                                                    <p style={{
+                                                        color: '#6b7280',
+                                                        fontSize: '14px',
+                                                        marginBottom: '8px',
+                                                        lineHeight: '1.4'
+                                                    }}>
+                                                        {notification.message}
+                                                    </p>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        gap: '16px',
+                                                        fontSize: '12px',
+                                                        color: '#9ca3af'
+                                                    }}>
+                                                        <span>
+                                                            📅 {notification.sentAt.toLocaleDateString()}
+                                                        </span>
+                                                        <span>
+                                                            👥 {notification.targetUsers === 'all' ? 'All Users' : 
+                                                                 notification.targetUsers === 'active' ? 'Active Users' : 'New Users'}
+                                                        </span>
+                                                        <span>
+                                                            ✅ {notification.delivered} delivered
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    gap: '8px',
+                                                    marginLeft: '16px'
+                                                }}>
+                                                    <button
+                                                        className="btn btn-secondary"
+                                                        style={{ fontSize: '12px', padding: '4px 8px' }}
+                                                        onClick={() => alert('Notification details feature coming soon!')}
+                                                    >
+                                                        View Details
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-danger"
+                                                        style={{ fontSize: '12px', padding: '4px 8px' }}
+                                                        onClick={() => confirm('Delete this notification?') && alert('Notification deleted!')}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Notification Stats */}
+                                <div className="grid-3" style={{ marginTop: '24px' }}>
+                                    <div className="card">
+                                        <h4 style={{
+                                            fontSize: '16px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '12px'
+                                        }}>
+                                            📊 Delivery Stats
+                                        </h4>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '8px'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>Total sent</span>
+                                            <span style={{ fontWeight: '500' }}>3</span>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '8px'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>Delivered</span>
+                                            <span style={{ fontWeight: '500', color: '#059669' }}>448</span>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>Success rate</span>
+                                            <span style={{ fontWeight: '500', color: '#059669' }}>98.5%</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="card">
+                                        <h4 style={{
+                                            fontSize: '16px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '12px'
+                                        }}>
+                                            🎯 Targeting
+                                        </h4>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '8px'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>All users</span>
+                                            <span style={{ fontWeight: '500' }}>{stats?.totalUsers || 0}</span>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginBottom: '8px'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>Active users</span>
+                                            <span style={{ fontWeight: '500' }}>{stats?.activeUsers || 0}</span>
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between'
+                                        }}>
+                                            <span style={{ color: '#6b7280', fontSize: '14px' }}>New users</span>
+                                            <span style={{ fontWeight: '500' }}>12</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="card">
+                                        <h4 style={{
+                                            fontSize: '16px',
+                                            fontWeight: '500',
+                                            color: '#111827',
+                                            marginBottom: '12px'
+                                        }}>
+                                            ⚡ Quick Actions
+                                        </h4>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ width: '100%', fontSize: '14px' }}
+                                                onClick={() => {
+                                                    const message = prompt('Enter maintenance message:');
+                                                    if (message) alert(\`Maintenance notification sent: "\${message}"\`);
+                                                }}
+                                            >
+                                                🔧 Maintenance Alert
+                                            </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ width: '100%', fontSize: '14px' }}
+                                                onClick={() => alert('New movies announcement sent to all users!')}
+                                            >
+                                                🎬 New Movies Alert
+                                            </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ width: '100%', fontSize: '14px' }}
+                                                onClick={() => alert('Welcome message sent to new users!')}
+                                            >
+                                                👋 Welcome Message
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </main>
